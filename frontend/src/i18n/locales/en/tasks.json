@@ -120,12 +120,6 @@
       "stopDevServer": "Stop dev server",
       "clickToEdit": "Click to edit URL",
       "resetUrl": "Reset to detected URL"
-    },
-    "browser": {
-      "title": "Dev Server Preview",
-      "startButton": "Start Dev Server",
-      "stopButton": "Stop",
-      "startingButton": "Start"
     }
   },
   "diff": {

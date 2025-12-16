@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, X } from 'lucide-react';
@@ -23,6 +23,7 @@ export function PreviewPanel() {
   const [showHelp, setShowHelp] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showLogs, setShowLogs] = useState(false);
+  const [customUrl, setCustomUrl] = useState<string | null>(null);
   const [customUrl, setCustomUrl] = useState<string | null>(null);
   const listenerRef = useRef<ClickToComponentListener | null>(null);
 
@@ -53,7 +54,9 @@ export function PreviewPanel() {
   });
 
   // Compute effective URL - custom URL overrides auto-detected
-  const effectiveUrl = customUrl ?? previewState.url;
+  const effectiveUrl = useMemo(() => {
+    return customUrl ?? previewState.url;
+  }, [customUrl, previewState.url]);
 
   const handleRefresh = () => {
     setIframeError(false);
@@ -66,6 +69,8 @@ export function PreviewPanel() {
   const { addElement } = useClickedElements();
 
   const handleCopyUrl = async () => {
+    if (effectiveUrl) {
+      await navigator.clipboard.writeText(effectiveUrl);
     if (effectiveUrl) {
       await navigator.clipboard.writeText(effectiveUrl);
     }
@@ -124,8 +129,12 @@ export function PreviewPanel() {
     (previewState.status === 'ready' && Boolean(previewState.url)) ||
     (customUrl !== null && runningDevServer);
   const isPreviewReadyWithoutError = isPreviewReady && !iframeError;
+    (previewState.status === 'ready' && Boolean(previewState.url)) ||
+    (customUrl !== null && runningDevServer);
+  const isPreviewReadyWithoutError = isPreviewReady && !iframeError;
   const mode = iframeError
     ? 'error'
+    : isPreviewReadyWithoutError
     : isPreviewReadyWithoutError
       ? 'ready'
       : runningDevServer
@@ -170,6 +179,7 @@ export function PreviewPanel() {
             <PreviewToolbar
               mode={mode}
               url={effectiveUrl}
+              url={effectiveUrl}
               onRefresh={handleRefresh}
               onCopyUrl={handleCopyUrl}
               onStop={stopDevServer}
@@ -177,8 +187,13 @@ export function PreviewPanel() {
               customUrl={customUrl}
               detectedUrl={lastKnownUrl?.url}
               onUrlChange={setCustomUrl}
+              customUrl={customUrl}
+              detectedUrl={lastKnownUrl?.url}
+              onUrlChange={setCustomUrl}
             />
             <ReadyContent
+              url={effectiveUrl}
+              iframeKey={`${effectiveUrl}-${refreshKey}`}
               url={effectiveUrl}
               iframeKey={`${effectiveUrl}-${refreshKey}`}
               onIframeError={handleIframeError}
