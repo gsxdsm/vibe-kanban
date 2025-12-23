@@ -49,6 +49,7 @@ use services::services::{
     git::{Commit, GitCli, GitService},
     image::ImageService,
     notification::NotificationService,
+    ntfy::NtfyService,
     queued_message::QueuedMessageService,
     share::SharePublisher,
     workspace_manager::{RepoWorkspaceInput, WorkspaceManager},
@@ -78,6 +79,7 @@ pub struct LocalContainerService {
     queued_message_service: QueuedMessageService,
     publisher: Result<SharePublisher, RemoteClientNotConfigured>,
     notification_service: NotificationService,
+    ntfy_service: NtfyService,
 }
 
 impl LocalContainerService {
@@ -96,6 +98,7 @@ impl LocalContainerService {
         let child_store = Arc::new(RwLock::new(HashMap::new()));
         let interrupt_senders = Arc::new(RwLock::new(HashMap::new()));
         let notification_service = NotificationService::new(config.clone());
+        let ntfy_service = NtfyService::new();
 
         let container = LocalContainerService {
             db,
@@ -110,6 +113,7 @@ impl LocalContainerService {
             queued_message_service,
             publisher,
             notification_service,
+            ntfy_service,
         };
 
         container.spawn_workspace_cleanup().await;
@@ -887,6 +891,10 @@ impl ContainerService for LocalContainerService {
 
     fn notification_service(&self) -> &NotificationService {
         &self.notification_service
+    }
+
+    fn ntfy_service(&self) -> &NtfyService {
+        &self.ntfy_service
     }
 
     async fn git_branch_prefix(&self) -> String {
