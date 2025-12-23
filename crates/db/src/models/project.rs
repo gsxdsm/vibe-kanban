@@ -26,6 +26,9 @@ pub struct Project {
     pub default_agent_working_dir: Option<String>,
     pub remote_project_id: Option<Uuid>,
     pub prefer_remote_branch: bool,
+    pub ntfy_enabled: bool,
+    pub ntfy_url: Option<String>,
+    pub ntfy_topic: Option<String>,
     #[ts(type = "Date")]
     pub created_at: DateTime<Utc>,
     #[ts(type = "Date")]
@@ -45,6 +48,9 @@ pub struct UpdateProject {
     pub dev_script_working_dir: Option<String>,
     pub default_agent_working_dir: Option<String>,
     pub prefer_remote_branch: Option<bool>,
+    pub ntfy_enabled: Option<bool>,
+    pub ntfy_url: Option<String>,
+    pub ntfy_topic: Option<String>,
 }
 
 #[derive(Debug, Serialize, TS)]
@@ -81,6 +87,9 @@ impl Project {
                       default_agent_working_dir,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
+                      ntfy_enabled,
+                      ntfy_url,
+                      ntfy_topic,
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -99,6 +108,9 @@ impl Project {
                    p.default_agent_working_dir,
                    p.remote_project_id as "remote_project_id: Uuid",
                    p.prefer_remote_branch,
+                   p.ntfy_enabled,
+                   p.ntfy_url,
+                   p.ntfy_topic,
                    p.created_at as "created_at!: DateTime<Utc>", p.updated_at as "updated_at!: DateTime<Utc>"
             FROM projects p
             WHERE p.id IN (
@@ -125,6 +137,9 @@ impl Project {
                       default_agent_working_dir,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
+                      ntfy_enabled,
+                      ntfy_url,
+                      ntfy_topic,
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -145,6 +160,9 @@ impl Project {
                       default_agent_working_dir,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
+                      ntfy_enabled,
+                      ntfy_url,
+                      ntfy_topic,
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -168,6 +186,9 @@ impl Project {
                       default_agent_working_dir,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
+                      ntfy_enabled,
+                      ntfy_url,
+                      ntfy_topic,
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -200,6 +221,9 @@ impl Project {
                           default_agent_working_dir,
                           remote_project_id as "remote_project_id: Uuid",
                           prefer_remote_branch,
+                          ntfy_enabled,
+                          ntfy_url,
+                          ntfy_topic,
                           created_at as "created_at!: DateTime<Utc>",
                           updated_at as "updated_at!: DateTime<Utc>""#,
             project_id,
@@ -223,11 +247,14 @@ impl Project {
         let dev_script_working_dir = payload.dev_script_working_dir.clone();
         let default_agent_working_dir = payload.default_agent_working_dir.clone();
         let prefer_remote_branch = payload.prefer_remote_branch.unwrap_or(existing.prefer_remote_branch);
+        let ntfy_enabled = payload.ntfy_enabled.unwrap_or(existing.ntfy_enabled);
+        let ntfy_url = payload.ntfy_url.clone().or(existing.ntfy_url);
+        let ntfy_topic = payload.ntfy_topic.clone().or(existing.ntfy_topic);
 
         sqlx::query_as!(
             Project,
             r#"UPDATE projects
-               SET name = $2, dev_script = $3, dev_script_working_dir = $4, default_agent_working_dir = $5, prefer_remote_branch = $6
+               SET name = $2, dev_script = $3, dev_script_working_dir = $4, default_agent_working_dir = $5, prefer_remote_branch = $6, ntfy_enabled = $7, ntfy_url = $8, ntfy_topic = $9
                WHERE id = $1
                RETURNING id as "id!: Uuid",
                          name,
@@ -236,6 +263,9 @@ impl Project {
                          default_agent_working_dir,
                          remote_project_id as "remote_project_id: Uuid",
                          prefer_remote_branch,
+                         ntfy_enabled,
+                         ntfy_url,
+                         ntfy_topic,
                          created_at as "created_at!: DateTime<Utc>",
                          updated_at as "updated_at!: DateTime<Utc>""#,
             id,
@@ -244,6 +274,9 @@ impl Project {
             dev_script_working_dir,
             default_agent_working_dir,
             prefer_remote_branch,
+            ntfy_enabled,
+            ntfy_url,
+            ntfy_topic,
         )
         .fetch_one(pool)
         .await
