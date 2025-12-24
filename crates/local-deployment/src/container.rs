@@ -430,6 +430,9 @@ impl LocalContainerService {
                     ExecutionProcessStatus::Running
                 );
 
+                // Track whether we've already finalized to prevent duplicate notifications
+                let mut already_finalized = false;
+
                 if success || cleanup_done {
                     // Commit changes (if any) and get feedback about whether changes were made
                     let changes_committed = match container.try_commit_changes(&ctx).await {
@@ -463,6 +466,7 @@ impl LocalContainerService {
 
                         // Manually finalize task since we're bypassing normal execution flow
                         container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                        already_finalized = true;
                     }
                 }
 
@@ -504,7 +508,9 @@ impl LocalContainerService {
                             {
                                 tracing::error!("Failed to start queued follow-up: {}", e);
                                 // Fall back to finalization if follow-up fails
-                                container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                                if !already_finalized {
+                                    container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                                }
                             }
                         } else {
                             // Execution failed or was killed - discard the queued message and finalize
@@ -513,10 +519,14 @@ impl LocalContainerService {
                                 ctx.session.id,
                                 ctx.execution_process.status
                             );
-                            container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                            if !already_finalized {
+                                container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                            }
                         }
                     } else {
-                        container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                        if !already_finalized {
+                            container.finalize_task(publisher.as_ref().ok(), &ctx).await;
+                        }
                     }
                 }
 
