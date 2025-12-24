@@ -133,9 +133,6 @@ impl ProjectService {
                     dev_script_working_dir: None,
                     default_agent_working_dir: Some(repo.name),
                     prefer_remote_branch: None,
-                    ntfy_enabled: None,
-                    ntfy_url: None,
-                    ntfy_topic: None,
                 },
             )
             .await?;
