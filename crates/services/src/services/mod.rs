@@ -13,7 +13,6 @@ pub mod git;
 pub mod github;
 pub mod image;
 pub mod notification;
-pub mod ntfy;
 pub mod oauth_credentials;
 pub mod pr_monitor;
 pub mod project;
