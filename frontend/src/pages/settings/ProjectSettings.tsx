@@ -39,9 +39,6 @@ interface ProjectFormState {
   dev_script_working_dir: string;
   default_agent_working_dir: string;
   prefer_remote_branch: boolean;
-  ntfy_enabled: boolean;
-  ntfy_url: string;
-  ntfy_topic: string;
 }
 
 interface RepoScriptsFormState {
@@ -51,16 +48,6 @@ interface RepoScriptsFormState {
   copy_files: string;
 }
 
-function generateDefaultNtfyTopic(projectName: string): string {
-  const sanitizedName = projectName
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  return `${sanitizedName}-${randomSuffix}`;
-}
-
 function projectToFormState(project: Project): ProjectFormState {
   return {
     name: project.name,
@@ -68,9 +55,6 @@ function projectToFormState(project: Project): ProjectFormState {
     dev_script_working_dir: project.dev_script_working_dir ?? '',
     default_agent_working_dir: project.default_agent_working_dir ?? '',
     prefer_remote_branch: project.prefer_remote_branch,
-    ntfy_enabled: project.ntfy_enabled,
-    ntfy_url: project.ntfy_url ?? 'https://ntfy.sh',
-    ntfy_topic: project.ntfy_topic ?? generateDefaultNtfyTopic(project.name),
   };
 }
 
@@ -416,9 +400,6 @@ export function ProjectSettings() {
         default_agent_working_dir:
           draft.default_agent_working_dir.trim() || null,
         prefer_remote_branch: draft.prefer_remote_branch,
-        ntfy_enabled: draft.ntfy_enabled,
-        ntfy_url: draft.ntfy_url.trim() || null,
-        ntfy_topic: draft.ntfy_topic.trim() || null,
       };
 
       updateProject.mutate({
@@ -671,68 +652,6 @@ export function ProjectSettings() {
                 <p className="text-sm text-muted-foreground pl-6">
                   When creating new tasks, automatically select the remote branch instead of the current local branch
                 </p>
-              </div>
-
-              {/* Ntfy Notifications Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="ntfy-enabled"
-                      checked={draft.ntfy_enabled}
-                      onCheckedChange={(checked) =>
-                        updateDraft({ ntfy_enabled: checked === true })
-                      }
-                    />
-                    <Label
-                      htmlFor="ntfy-enabled"
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      Enable Remote Notifications (ntfy)
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground pl-6">
-                    Send push notifications to your phone or other devices when tasks complete
-                  </p>
-                </div>
-
-                {draft.ntfy_enabled && (
-                  <>
-                    <div className="space-y-2 pl-6">
-                      <Label htmlFor="ntfy-url">Server URL</Label>
-                      <Input
-                        id="ntfy-url"
-                        type="url"
-                        value={draft.ntfy_url}
-                        onChange={(e) =>
-                          updateDraft({ ntfy_url: e.target.value })
-                        }
-                        placeholder="https://ntfy.sh"
-                        className="font-mono"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        The ntfy server URL. Default is ntfy.sh (public server)
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 pl-6">
-                      <Label htmlFor="ntfy-topic">Topic</Label>
-                      <Input
-                        id="ntfy-topic"
-                        type="text"
-                        value={draft.ntfy_topic}
-                        onChange={(e) =>
-                          updateDraft({ ntfy_topic: e.target.value })
-                        }
-                        placeholder="my-project-abc123"
-                        className="font-mono"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        A unique topic name for this project. Subscribe to this topic in the ntfy app to receive notifications
-                      </p>
-                    </div>
-                  </>
-                )}
               </div>
 
               {/* Save Button */}
