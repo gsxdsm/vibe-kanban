@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id as \"id!: Uuid\",\n                      name,\n                      dev_script,\n                      dev_script_working_dir,\n                      default_agent_working_dir,\n                      remote_project_id as \"remote_project_id: Uuid\",\n                      prefer_remote_branch,\n                      ntfy_enabled,\n                      ntfy_url,\n                      ntfy_topic,\n                      created_at as \"created_at!: DateTime<Utc>\",\n                      updated_at as \"updated_at!: DateTime<Utc>\"\n               FROM projects\n               WHERE rowid = $1",
+  "query": "SELECT id as \"id!: Uuid\",\n                      name,\n                      dev_script,\n                      dev_script_working_dir,\n                      default_agent_working_dir,\n                      remote_project_id as \"remote_project_id: Uuid\",\n                      prefer_remote_branch,\n                      created_at as \"created_at!: DateTime<Utc>\",\n                      updated_at as \"updated_at!: DateTime<Utc>\"\n               FROM projects\n               ORDER BY created_at DESC",
   "describe": {
     "columns": [
       {
@@ -39,33 +39,18 @@
         "type_info": "Bool"
       },
       {
-        "name": "ntfy_enabled",
-        "ordinal": 7,
-        "type_info": "Bool"
-      },
-      {
-        "name": "ntfy_url",
-        "ordinal": 8,
-        "type_info": "Text"
-      },
-      {
-        "name": "ntfy_topic",
-        "ordinal": 9,
-        "type_info": "Text"
-      },
-      {
         "name": "created_at!: DateTime<Utc>",
-        "ordinal": 10,
+        "ordinal": 7,
         "type_info": "Text"
       },
       {
         "name": "updated_at!: DateTime<Utc>",
-        "ordinal": 11,
+        "ordinal": 8,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       true,
@@ -76,11 +61,8 @@
       true,
       false,
       false,
-      true,
-      true,
-      false,
       false
     ]
   },
-  "hash": "46b8bd50e4fb8dd8f9c9b3d3b0fdc01511bc83c8909c8879a96488ab808a7e30"
+  "hash": "968b28b213a882d61b2d13766adf2bdaa8e10b6897ff3fcb5af186bf89a0ac3d"
 }
