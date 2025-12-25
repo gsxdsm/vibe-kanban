@@ -116,14 +116,21 @@ async fn main() -> Result<(), VibeKanbanError> {
     tracing::info!("Server running on http://{host}:{actual_port}");
 
     if !cfg!(debug_assertions) {
-        tracing::info!("Opening browser...");
+        // Load deployment to check config before opening browser
+        let deployment_for_browser = deployment.clone();
         tokio::spawn(async move {
-            if let Err(e) = open_browser(&format!("http://127.0.0.1:{actual_port}")).await {
-                tracing::warn!(
-                    "Failed to open browser automatically: {}. Please open http://127.0.0.1:{} manually.",
-                    e,
-                    actual_port
-                );
+            let config = deployment_for_browser.config().read().await;
+            if config.auto_open_app_in_browser {
+                tracing::info!("Opening browser...");
+                if let Err(e) = open_browser(&format!("http://127.0.0.1:{actual_port}")).await {
+                    tracing::warn!(
+                        "Failed to open browser automatically: {}. Please open http://127.0.0.1:{} manually.",
+                        e,
+                        actual_port
+                    );
+                }
+            } else {
+                tracing::info!("Browser opening disabled by configuration. Please open http://127.0.0.1:{} manually.", actual_port);
             }
         });
     }

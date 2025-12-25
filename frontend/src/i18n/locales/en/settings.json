@@ -142,6 +142,10 @@
           "label": "Auto-generate PR description by default",
           "helper": "When enabled, the AI agent will automatically update the PR title and description after creation."
         },
+        "autoOpenInBrowser": {
+          "label": "Auto-open Pull Requests in browser",
+          "helper": "When enabled, pull requests will automatically open in your default browser after creation."
+        },
         "customPrompt": {
           "useCustom": "Use custom prompt",
           "helper": "Custom prompt for the AI agent when generating PR descriptions. Use {pr_number} and {pr_url} as placeholders."
@@ -175,6 +179,10 @@
         "telemetry": {
           "label": "Enable Telemetry",
           "helper": "Enables anonymous usage events tracking to help improve the application. No prompts or project information are collected."
+        },
+        "autoOpenApp": {
+          "label": "Auto-open app in browser on startup",
+          "helper": "When enabled, the Vibe Kanban UI will automatically open in your browser when the application starts."
         }
       },
       "taskTemplates": {
