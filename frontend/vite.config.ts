@@ -63,6 +63,8 @@ export default defineConfig({
   },
   server: {
     port: parseInt(process.env.FRONTEND_PORT || "3000"),
+    host: true,
+    allowedHosts: true,
     proxy: {
       "/api": {
         target: `http://localhost:${process.env.BACKEND_PORT || "3001"}`,

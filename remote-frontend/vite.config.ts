@@ -5,8 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3002,
-    allowedHosts: [
-      ".trycloudflare.com", // allow all cloudflared tunnels
-    ],
+    host: true,
+    allowedHosts: true,
   }
 })
