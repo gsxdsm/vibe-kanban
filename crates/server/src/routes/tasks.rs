@@ -25,7 +25,8 @@ use executors::profile::ExecutorProfileId;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use services::services::{
-    container::ContainerService, share::ShareError, workspace_manager::WorkspaceManager,
+    container::ContainerService, git::GitService, share::ShareError,
+    workspace_manager::WorkspaceManager,
 };
 use sqlx::Error as SqlxError;
 use ts_rs::TS;
@@ -308,9 +309,20 @@ async fn ensure_shared_task_auth(
     Ok(())
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DeleteTaskQuery {
+    #[serde(default = "default_delete_branch")]
+    pub delete_branch: bool,
+}
+
+fn default_delete_branch() -> bool {
+    true
+}
+
 pub async fn delete_task(
     Extension(task): Extension<Task>,
     State(deployment): State<DeploymentImpl>,
+    Query(query): Query<DeleteTaskQuery>,
 ) -> Result<(StatusCode, ResponseJson<ApiResponse<()>>), ApiError> {
     ensure_shared_task_auth(&task, &deployment).await?;
 
@@ -340,6 +352,13 @@ pub async fn delete_task(
         .iter()
         .filter_map(|attempt| attempt.container_ref.as_ref().map(PathBuf::from))
         .collect();
+
+    // Collect branch names for deletion if requested
+    let branches_to_delete: Vec<String> = if query.delete_branch {
+        attempts.iter().map(|attempt| attempt.branch.clone()).collect()
+    } else {
+        Vec::new()
+    };
 
     if let Some(shared_task_id) = task.shared_task_id {
         let Ok(publisher) = deployment.share_publisher() else {
@@ -393,10 +412,11 @@ pub async fn delete_task(
     let pool = pool.clone();
     tokio::spawn(async move {
         tracing::info!(
-            "Starting background cleanup for task {} ({} workspaces, {} repos)",
+            "Starting background cleanup for task {} ({} workspaces, {} repos, {} branches to delete)",
             task_id,
             workspace_dirs.len(),
-            repositories.len()
+            repositories.len(),
+            branches_to_delete.len()
         );
 
         for workspace_dir in &workspace_dirs {
@@ -408,6 +428,35 @@ pub async fn delete_task(
                     workspace_dir.display(),
                     e
                 );
+            }
+        }
+
+        // Delete branches from each repository if requested
+        if !branches_to_delete.is_empty() {
+            let git_service = GitService::new();
+            for repo in &repositories {
+                for branch_name in &branches_to_delete {
+                    // Use force=true since worktrees have been removed and branch may appear unmerged
+                    match git_service.delete_local_branch(&repo.path, branch_name, true) {
+                        Ok(()) => {
+                            tracing::info!(
+                                "Deleted branch '{}' from repo '{}' for task {}",
+                                branch_name,
+                                repo.display_name,
+                                task_id
+                            );
+                        }
+                        Err(e) => {
+                            // Log but don't fail - branch may already be deleted or not exist
+                            tracing::debug!(
+                                "Could not delete branch '{}' from repo '{}': {}",
+                                branch_name,
+                                repo.display_name,
+                                e
+                            );
+                        }
+                    }
+                }
             }
         }
 

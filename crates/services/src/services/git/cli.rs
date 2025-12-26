@@ -154,6 +154,19 @@ impl GitCli {
         Ok(())
     }
 
+    /// Delete a local branch. Use force=true to delete unmerged branches (-D).
+    pub fn delete_local_branch(
+        &self,
+        repo_path: &Path,
+        branch_name: &str,
+        force: bool,
+    ) -> Result<(), GitCliError> {
+        self.ensure_available()?;
+        let flag = if force { "-D" } else { "-d" };
+        self.git(repo_path, ["branch", flag, branch_name])?;
+        Ok(())
+    }
+
     /// Return true if there are any changes in the working tree (staged or unstaged).
     pub fn has_changes(&self, worktree_path: &Path) -> Result<bool, GitCliError> {
         let out = self.git(

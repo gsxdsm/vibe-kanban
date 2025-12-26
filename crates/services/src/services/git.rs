@@ -1208,6 +1208,19 @@ impl GitService {
         Ok(())
     }
 
+    /// Delete a local branch. Use force=true to delete unmerged branches.
+    pub fn delete_local_branch(
+        &self,
+        repo_path: &Path,
+        branch_name: &str,
+        force: bool,
+    ) -> Result<(), GitServiceError> {
+        let git = GitCli::new();
+        git.delete_local_branch(repo_path, branch_name, force)
+            .map_err(|e| GitServiceError::InvalidRepository(e.to_string()))?;
+        Ok(())
+    }
+
     pub fn get_all_branches(&self, repo_path: &Path) -> Result<Vec<GitBranch>, git2::Error> {
         let repo = Repository::open(repo_path)?;
         let current_branch = self.get_current_branch(repo_path).unwrap_or_default();
