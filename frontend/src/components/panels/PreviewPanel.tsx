@@ -18,6 +18,7 @@ import { ReadyContent } from '@/components/tasks/TaskDetails/preview/ReadyConten
 
 export function PreviewPanel() {
   const [iframeError, setIframeError] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [loadingTimeFinished, setLoadingTimeFinished] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -59,10 +60,15 @@ export function PreviewPanel() {
 
   const handleRefresh = () => {
     setIframeError(false);
+    setIframeLoaded(false);
     setRefreshKey((prev) => prev + 1);
   };
   const handleIframeError = () => {
     setIframeError(true);
+  };
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setShowHelp(false);
   };
 
   const { addElement } = useClickedElements();
@@ -113,6 +119,7 @@ export function PreviewPanel() {
     if (
       loadingTimeFinished &&
       !isReady &&
+      !iframeLoaded &&
       latestDevServerProcess &&
       runningDevServer
     ) {
@@ -120,7 +127,7 @@ export function PreviewPanel() {
       setShowLogs(true);
       setLoadingTimeFinished(false);
     }
-  }, [loadingTimeFinished, isReady, latestDevServerProcess, runningDevServer]);
+  }, [loadingTimeFinished, isReady, iframeLoaded, latestDevServerProcess, runningDevServer]);
 
   const isPreviewReady =
     (previewState.status === 'ready' && Boolean(previewState.url)) ||
@@ -184,6 +191,7 @@ export function PreviewPanel() {
               url={effectiveUrl}
               iframeKey={`${effectiveUrl}-${refreshKey}`}
               onIframeError={handleIframeError}
+              onIframeLoad={handleIframeLoad}
             />
           </>
         ) : (
