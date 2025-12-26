@@ -30,10 +30,15 @@ const DeleteTaskConfirmationDialogImpl =
     const [branchNames, setBranchNames] = useState<string[]>([]);
 
     useEffect(() => {
-      attemptsApi.getAll(task.id).then((workspaces) => {
-        const uniqueBranches = [...new Set(workspaces.map((w) => w.branch))];
-        setBranchNames(uniqueBranches);
-      });
+      attemptsApi
+        .getAll(task.id)
+        .then((workspaces) => {
+          const uniqueBranches = [...new Set(workspaces.map((w) => w.branch))];
+          setBranchNames(uniqueBranches);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch branch names:', err);
+        });
     }, [task.id]);
 
     const handleConfirmDelete = async () => {

@@ -423,8 +423,9 @@ export const tasksApi = {
     options?: { deleteBranch?: boolean }
   ): Promise<void> => {
     const params = new URLSearchParams();
-    if (options?.deleteBranch !== undefined) {
-      params.set('delete_branch', String(options.deleteBranch));
+    // Only set parameter when false; backend defaults to true
+    if (options?.deleteBranch === false) {
+      params.set('delete_branch', 'false');
     }
     const queryString = params.toString();
     const url = `/api/tasks/${taskId}${queryString ? `?${queryString}` : ''}`;

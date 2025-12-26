@@ -1215,8 +1215,7 @@ impl GitService {
         force: bool,
     ) -> Result<(), GitServiceError> {
         let git = GitCli::new();
-        git.delete_local_branch(repo_path, branch_name, force)
-            .map_err(|e| GitServiceError::InvalidRepository(e.to_string()))?;
+        git.delete_local_branch(repo_path, branch_name, force)?;
         Ok(())
     }
 
