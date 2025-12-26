@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
-import { tasksApi } from '@/lib/api';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { tasksApi, attemptsApi } from '@/lib/api';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
@@ -24,13 +26,22 @@ const DeleteTaskConfirmationDialogImpl =
     const modal = useModal();
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [deleteBranch, setDeleteBranch] = useState(true);
+    const [branchNames, setBranchNames] = useState<string[]>([]);
+
+    useEffect(() => {
+      attemptsApi.getAll(task.id).then((workspaces) => {
+        const uniqueBranches = [...new Set(workspaces.map((w) => w.branch))];
+        setBranchNames(uniqueBranches);
+      });
+    }, [task.id]);
 
     const handleConfirmDelete = async () => {
       setIsDeleting(true);
       setError(null);
 
       try {
-        await tasksApi.delete(task.id);
+        await tasksApi.delete(task.id, { deleteBranch });
         modal.resolve();
         modal.hide();
       } catch (err: unknown) {
@@ -65,6 +76,28 @@ const DeleteTaskConfirmationDialogImpl =
             <strong>Warning:</strong> This action will permanently delete the
             task and cannot be undone.
           </Alert>
+
+          {branchNames.length > 0 && (
+            <div className="flex items-start space-x-2 mb-4">
+              <Checkbox
+                id="delete-branch"
+                checked={deleteBranch}
+                onCheckedChange={(checked) => setDeleteBranch(checked)}
+                disabled={isDeleting}
+                className="mt-0.5"
+              />
+              <Label
+                htmlFor="delete-branch"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                Also delete git{' '}
+                {branchNames.length === 1 ? 'branch' : 'branches'}:{' '}
+                <span className="font-mono text-muted-foreground">
+                  {branchNames.join(', ')}
+                </span>
+              </Label>
+            </div>
+          )}
 
           {error && (
             <Alert variant="destructive" className="mb-4">
