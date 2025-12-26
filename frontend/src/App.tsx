@@ -66,17 +66,23 @@ function AppContent() {
 
     const showNextStep = async () => {
       // 1) Disclaimer - first step
-      if (!config.disclaimer_acknowledged) {
+      // Skip disclaimer in development mode
+      const isDevelopment = import.meta.env.MODE === 'development';
+      if (!config.disclaimer_acknowledged && !isDevelopment) {
         await DisclaimerDialog.show();
         if (!cancelled) {
           await updateAndSaveConfig({ disclaimer_acknowledged: true });
         }
         DisclaimerDialog.hide();
         return;
+      } else if (!config.disclaimer_acknowledged && isDevelopment) {
+        // In development mode, automatically acknowledge disclaimer
+        await updateAndSaveConfig({ disclaimer_acknowledged: true });
       }
 
       // 2) Onboarding - configure executor and editor
-      if (!config.onboarding_acknowledged) {
+      // Skip onboarding in development mode
+      if (!config.onboarding_acknowledged && !isDevelopment) {
         const result = await OnboardingDialog.show();
         if (!cancelled) {
           await updateAndSaveConfig({
@@ -87,6 +93,21 @@ function AppContent() {
         }
         OnboardingDialog.hide();
         return;
+      } else if (!config.onboarding_acknowledged && isDevelopment) {
+        // In development mode, automatically acknowledge onboarding with default values
+        await updateAndSaveConfig({
+          onboarding_acknowledged: true,
+          executor_profile: config.executor_profile || {
+            executor: 'CLAUDE_CODE',
+            variant: null,
+          },
+          editor: config.editor || {
+            editor_type: 'VS_CODE',
+            custom_command: null,
+            remote_ssh_host: null,
+            remote_ssh_user: null,
+          },
+        });
       }
 
       // 3) Release notes - last step
