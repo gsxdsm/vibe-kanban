@@ -353,9 +353,14 @@ pub async fn delete_task(
         .filter_map(|attempt| attempt.container_ref.as_ref().map(PathBuf::from))
         .collect();
 
-    // Collect branch names for deletion if requested
+    // Collect unique branch names for deletion if requested
     let branches_to_delete: Vec<String> = if query.delete_branch {
-        attempts.iter().map(|attempt| attempt.branch.clone()).collect()
+        attempts
+            .iter()
+            .map(|attempt| attempt.branch.clone())
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .collect()
     } else {
         Vec::new()
     };
