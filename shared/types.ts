@@ -98,7 +98,7 @@ dropped: boolean, started_at: string, completed_at: string | null, created_at: s
 
 export enum ExecutionProcessStatus { running = "running", completed = "completed", failed = "failed", killed = "killed" }
 
-export type ExecutionProcessRunReason = "setupscript" | "cleanupscript" | "codingagent" | "devserver";
+export type ExecutionProcessRunReason = "setupscript" | "cleanupscript" | "codingagent" | "devserver" | "arbitrarycommand";
 
 export type ExecutionProcessRepoState = { id: string, execution_process_id: string, repo_id: string, before_head_commit: string | null, after_head_commit: string | null, merge_commit: string | null, created_at: Date, updated_at: Date, };
 
@@ -288,7 +288,9 @@ conflicted_files: Array<string>, };
 
 export type RunScriptError = { "type": "no_script_configured" } | { "type": "process_already_running" };
 
-export type DeleteWorkspaceError = { "type": "has_running_processes" };
+export type RunArbitraryCommandRequest = { command: string, };
+
+export type RunArbitraryCommandError = { "type": "process_already_running" } | { "type": "empty_command" };
 
 export type AttachPrResponse = { pr_attached: boolean, pr_url: string | null, pr_number: bigint | null, pr_status: MergeStatus | null, };
 
@@ -418,7 +420,7 @@ export type McpConfig = { servers: { [key in string]?: JsonValue }, servers_path
 
 export type ExecutorActionType = { "type": "CodingAgentInitialRequest" } & CodingAgentInitialRequest | { "type": "CodingAgentFollowUpRequest" } & CodingAgentFollowUpRequest | { "type": "ScriptRequest" } & ScriptRequest;
 
-export type ScriptContext = "SetupScript" | "CleanupScript" | "DevServer" | "ToolInstallScript";
+export type ScriptContext = "SetupScript" | "CleanupScript" | "DevServer" | "ToolInstallScript" | "ArbitraryCommand";
 
 export type ScriptRequest = { script: string, language: ScriptRequestLanguage, context: ScriptContext, 
 /**
