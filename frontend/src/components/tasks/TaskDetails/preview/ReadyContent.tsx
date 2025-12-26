@@ -4,12 +4,14 @@ interface ReadyContentProps {
   url?: string;
   iframeKey: string;
   onIframeError: () => void;
+  onIframeLoad?: () => void;
 }
 
 export function ReadyContent({
   url,
   iframeKey,
   onIframeError,
+  onIframeLoad,
 }: ReadyContentProps) {
   const { t } = useTranslation('tasks');
 
@@ -23,6 +25,7 @@ export function ReadyContent({
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
         referrerPolicy="no-referrer"
         onError={onIframeError}
+        onLoad={onIframeLoad}
       />
     </div>
   );
