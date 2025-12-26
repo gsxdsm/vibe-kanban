@@ -61,6 +61,7 @@ import { queueApi } from '@/lib/api';
 import type { QueueStatus } from 'shared/types';
 import { imagesApi, attemptsApi } from '@/lib/api';
 import { GitHubCommentsDialog } from '@/components/dialogs/tasks/GitHubCommentsDialog';
+import { RunCommandDialog } from '@/components/dialogs/tasks/RunCommandDialog';
 import type { NormalizedComment } from '@/components/ui/wysiwyg/nodes/github-comment-node';
 import type { Session } from 'shared/types';
 
@@ -436,6 +437,11 @@ export function TaskFollowUpSection({
       console.error('Failed to run cleanup script:', error);
     }
   }, [workspaceId, isAttemptRunning]);
+
+  const handleOpenRunCommand = useCallback(() => {
+    if (!workspaceId) return;
+    RunCommandDialog.show({ attemptId: workspaceId });
+  }, [workspaceId]);
 
   // Handler to queue the current message for execution after agent finishes
   const handleQueueMessage = useCallback(async () => {
@@ -871,6 +877,10 @@ export function TaskFollowUpSection({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleRunCleanupScript}>
                   {t('followUp.runCleanupScript')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleOpenRunCommand}>
+                  <Terminal className="h-4 w-4 mr-2" />
+                  {t('followUp.runCommand.menuItem')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
