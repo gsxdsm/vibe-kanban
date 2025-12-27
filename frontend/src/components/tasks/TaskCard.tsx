@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KanbanCard } from '@/components/ui/shadcn-io/kanban';
-import { Link, Loader2, XCircle } from 'lucide-react';
+import {
+  Link,
+  Loader2,
+  XCircle,
+  GitPullRequest,
+  ExternalLink,
+} from 'lucide-react';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import { ActionsDropdown } from '@/components/ui/actions-dropdown';
 import { Button } from '@/components/ui/button';
@@ -138,6 +144,20 @@ export function TaskCard({
               ? `${task.description.substring(0, 130)}...`
               : task.description}
           </p>
+        )}
+        {task.pr_number != null && task.pr_url && (
+          <div className="mt-1 flex">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(task.pr_url!, '_blank');
+              }}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-100/60 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:underline text-xs"
+            >
+              <GitPullRequest className="h-3 w-3" />#{task.pr_number.toString()}
+              <ExternalLink className="h-3 w-3" />
+            </button>
+          </div>
         )}
       </div>
     </KanbanCard>
