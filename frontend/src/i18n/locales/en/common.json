@@ -39,6 +39,7 @@
     "output": "Output",
     "result": "Result",
     "deniedByUser": "{{toolName}} denied by user",
+    "rerunCommand": "Edit and re-run command",
     "taskCompleted": "Task completed",
     "ran": "Ran",
     "tool": "Tool",

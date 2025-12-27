@@ -39,6 +39,7 @@
     "output": "输出",
     "result": "结果",
     "deniedByUser": "用户拒绝了 {{toolName}}",
+    "rerunCommand": "编辑并重新运行命令",
     "taskCompleted": "任务完成",
     "ran": "执行了",
     "tool": "工具",
