@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "VITE_OPEN=${VITE_OPEN:-false} vite",
-    "build": "tsc && vite build",
-    "check": "tsc --noEmit",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 tsc && NODE_OPTIONS=--max-old-space-size=4096 vite build",
+    "check": "NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
-    "lint:i18n": "LINT_I18N=true eslint . --ext ts,tsx --max-warnings 0",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "NODE_OPTIONS=--max-old-space-size=4096 eslint . --ext ts,tsx --fix",
+    "lint:i18n": "NODE_OPTIONS=--max-old-space-size=4096 LINT_I18N=true eslint . --ext ts,tsx --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
