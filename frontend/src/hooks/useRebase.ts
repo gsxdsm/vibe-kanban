@@ -3,6 +3,7 @@ import { attemptsApi, Result } from '@/lib/api';
 import type { RebaseTaskAttemptRequest } from 'shared/types';
 import type { GitOperationError } from 'shared/types';
 import { repoBranchKeys } from './useRepoBranches';
+import { diffStreamKeys } from './useDiffStream';
 
 export function useRebase(
   attemptId: string | undefined,
@@ -54,6 +55,13 @@ export function useRebase(
             queryKey: repoBranchKeys.byRepo(repoId),
           });
         }
+
+        // Force diff stream to reconnect with fresh base_commit after rebase
+        // This fixes the issue where already-merged commits temporarily appear
+        // because the old WebSocket was using a stale merge-base
+        queryClient.invalidateQueries({
+          queryKey: diffStreamKeys.refresh(attemptId ?? null),
+        });
 
         onSuccess?.();
       },
