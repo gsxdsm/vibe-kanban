@@ -17,6 +17,7 @@ import {
   ExecutionProcessRepoState,
   GitBranch,
   Project,
+  ProjectExport,
   ProjectRepo,
   Repo,
   RepoWithTargetBranch,
@@ -250,6 +251,24 @@ export const projectsApi = {
       body: JSON.stringify(data),
     });
     return handleApiResponse<Project>(response);
+  },
+
+  export: async (id: string): Promise<ProjectExport> => {
+    const response = await makeRequest(`/api/projects/${id}/export`);
+    return handleApiResponse<ProjectExport>(response);
+  },
+
+  exportAll: async (): Promise<ProjectExport[]> => {
+    const response = await makeRequest(`/api/projects/export`);
+    return handleApiResponse<ProjectExport[]>(response);
+  },
+
+  import: async (data: ProjectExport[]): Promise<Project[]> => {
+    const response = await makeRequest(`/api/projects/import`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return handleApiResponse<Project[]>(response);
   },
 
   getRemoteMembers: async (
