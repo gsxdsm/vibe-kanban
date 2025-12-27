@@ -4,7 +4,7 @@ use std::{
 };
 
 use db::models::{
-    project::{CreateProject, Project, ProjectError, SearchMatchType, SearchResult, UpdateProject},
+    project::{CreateProject, Project, ProjectError, ProjectExport, ProjectRepoExport, SearchMatchType, SearchResult, UpdateProject},
     project_repo::{CreateProjectRepo, ProjectRepo},
     repo::Repo,
     task::Task,
@@ -485,5 +485,125 @@ impl ProjectService {
 
         results.truncate(10);
         Ok(results)
+    }
+
+    pub async fn export_project(
+        &self,
+        pool: &SqlitePool,
+        project_id: Uuid,
+    ) -> Result<ProjectExport> {
+        let project = Project::find_by_id(pool, project_id)
+            .await?
+            .ok_or(ProjectError::ProjectNotFound)?;
+
+        let project_repos = ProjectRepo::find_by_project_id(pool, project_id).await?;
+        let mut repositories = Vec::new();
+
+        for pr in project_repos {
+            let repo = Repo::find_by_id(pool, pr.repo_id)
+                .await?
+                .ok_or(ProjectServiceError::RepositoryNotFound)?;
+
+            repositories.push(ProjectRepoExport {
+                display_name: repo.display_name,
+                git_repo_path: repo.path.to_string_lossy().to_string(),
+                setup_script: pr.setup_script,
+                cleanup_script: pr.cleanup_script,
+                copy_files: pr.copy_files,
+                parallel_setup_script: pr.parallel_setup_script,
+            });
+        }
+
+        Ok(ProjectExport {
+            name: project.name,
+            dev_script: project.dev_script,
+            dev_script_working_dir: project.dev_script_working_dir,
+            default_agent_working_dir: project.default_agent_working_dir,
+            prefer_remote_branch: project.prefer_remote_branch,
+            repositories,
+        })
+    }
+
+    pub async fn export_all_projects(&self, pool: &SqlitePool) -> Result<Vec<ProjectExport>> {
+        let projects = Project::find_all(pool).await?;
+        let mut exports = Vec::new();
+        for project in projects {
+            exports.push(self.export_project(pool, project.id).await?);
+        }
+        Ok(exports)
+    }
+
+    pub async fn import_project(
+        &self,
+        pool: &SqlitePool,
+        repo_service: &RepoService,
+        export: ProjectExport,
+    ) -> Result<Project> {
+        let create_payload = CreateProject {
+            name: export.name.clone(),
+            repositories: export
+                .repositories
+                .iter()
+                .map(|r| CreateProjectRepo {
+                    display_name: r.display_name.clone(),
+                    git_repo_path: r.git_repo_path.clone(),
+                })
+                .collect(),
+        };
+
+        let project = self.create_project(pool, repo_service, create_payload).await?;
+
+        let project = self.update_project(
+            pool,
+            &project,
+            UpdateProject {
+                name: None,
+                dev_script: export.dev_script,
+                dev_script_working_dir: export.dev_script_working_dir,
+                default_agent_working_dir: export.default_agent_working_dir,
+                prefer_remote_branch: Some(export.prefer_remote_branch),
+            },
+        ).await?;
+
+        for repo_export in export.repositories {
+             let repo = Repo::find_or_create(pool, Path::new(&repo_export.git_repo_path), &repo_export.display_name).await?;
+             
+             ProjectRepo::update(
+                 pool,
+                 project.id,
+                 repo.id,
+                 &db::models::project_repo::UpdateProjectRepo {
+                     setup_script: repo_export.setup_script,
+                     cleanup_script: repo_export.cleanup_script,
+                     copy_files: repo_export.copy_files,
+                     parallel_setup_script: Some(repo_export.parallel_setup_script),
+                 }
+             ).await
+             .map_err(|e| match e {
+                 db::models::project_repo::ProjectRepoError::Database(e) => ProjectServiceError::Database(e),
+                 _ => ProjectServiceError::RepositoryNotFound,
+             })?;
+        }
+
+        Ok(project)
+    }
+
+    pub async fn import_projects(
+        &self,
+        pool: &SqlitePool,
+        repo_service: &RepoService,
+        exports: Vec<ProjectExport>,
+    ) -> Result<Vec<Project>> {
+        let mut projects = Vec::new();
+        for export in exports {
+             // We continue even if one fails, or should we stop?
+             // Since this is likely a user-initiated "restore", logging errors is probably safer than partial fail/abort.
+             // But we should probably return errors.
+             match self.import_project(pool, repo_service, export).await {
+                 Ok(p) => projects.push(p),
+                 Err(e) => tracing::error!("Failed to import project: {}", e),
+             }
+        }
+        Ok(projects)
     }
 }
