@@ -38,6 +38,26 @@ pub struct CreateProject {
     pub repositories: Vec<CreateProjectRepo>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct ProjectRepoExport {
+    pub display_name: String,
+    pub git_repo_path: String,
+    pub setup_script: Option<String>,
+    pub cleanup_script: Option<String>,
+    pub copy_files: Option<String>,
+    pub parallel_setup_script: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct ProjectExport {
+    pub name: String,
+    pub dev_script: Option<String>,
+    pub dev_script_working_dir: Option<String>,
+    pub default_agent_working_dir: Option<String>,
+    pub prefer_remote_branch: bool,
+    pub repositories: Vec<ProjectRepoExport>,
+}
+
 #[derive(Debug, Deserialize, TS)]
 pub struct UpdateProject {
     pub name: Option<String>,
