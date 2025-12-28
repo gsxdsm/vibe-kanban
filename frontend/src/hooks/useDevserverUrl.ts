@@ -28,17 +28,9 @@ export const detectDevserverUrl = (line: string): DevserverUrlInfo | null => {
   if (fullUrlMatch) {
     try {
       const parsed = new URL(fullUrlMatch[1]);
-      // Replace loopback addresses with the browser's hostname so previews
+      // Always use the browser's hostname so previews
       // work when accessing from a different machine
-      if (
-        parsed.hostname === '0.0.0.0' ||
-        parsed.hostname === '::' ||
-        parsed.hostname === '[::]' ||
-        parsed.hostname === 'localhost' ||
-        parsed.hostname === '127.0.0.1'
-      ) {
-        parsed.hostname = browserHostname;
-      }
+      parsed.hostname = browserHostname;
       return {
         url: parsed.toString(),
         port: parsed.port ? Number(parsed.port) : undefined,
