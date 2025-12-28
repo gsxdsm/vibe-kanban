@@ -6,7 +6,19 @@ const path = require("path");
 const fs = require("fs");
 const { ensureBinary, BINARY_TAG, CACHE_DIR, getLatestVersion } = require("./download");
 
-const CLI_VERSION = require("../package.json").version;
+function getVersion() {
+  try {
+    return require("../package.json").version;
+  } catch (e) {
+    try {
+      return require("../../package.json").version;
+    } catch (e2) {
+      return "0.0.0";
+    }
+  }
+}
+
+const CLI_VERSION = getVersion();
 
 // Resolve effective arch for our published 64-bit binaries only.
 // Any ARM → arm64; anything else → x64. On macOS, handle Rosetta.
@@ -73,6 +85,9 @@ function getBinaryName(base) {
 const platformDir = getPlatformDir();
 const versionCacheDir = path.join(CACHE_DIR, BINARY_TAG, platformDir);
 
+// Check for bundled binaries in dist/ directory (for local builds)
+const bundledDistDir = path.join(__dirname, "..", "dist", platformDir);
+
 function showProgress(downloaded, total) {
   const percent = total ? Math.round((downloaded / total) * 100) : 0;
   const mb = (downloaded / (1024 * 1024)).toFixed(1);
@@ -85,6 +100,10 @@ async function extractAndRun(baseName, launch) {
   const binPath = path.join(versionCacheDir, binName);
   const zipPath = path.join(versionCacheDir, `${baseName}.zip`);
 
+  // Check for bundled binary in dist/ directory (for local builds)
+  const bundledZipPath = path.join(bundledDistDir, `${baseName}.zip`);
+  const hasBundledBinary = fs.existsSync(bundledZipPath);
+
   // Clean old binary if exists
   try {
     if (fs.existsSync(binPath)) {
@@ -96,15 +115,21 @@ async function extractAndRun(baseName, launch) {
     }
   }
 
-  // Download if not cached
+  // Use bundled binary if available, otherwise download
   if (!fs.existsSync(zipPath)) {
-    console.error(`Downloading ${baseName}...`);
-    try {
-      await ensureBinary(platformDir, baseName, showProgress);
-      console.error(""); // newline after progress
-    } catch (err) {
-      console.error(`\nDownload failed: ${err.message}`);
-      process.exit(1);
+    if (hasBundledBinary) {
+      // Copy bundled zip to cache directory
+      fs.mkdirSync(versionCacheDir, { recursive: true });
+      fs.copyFileSync(bundledZipPath, zipPath);
+    } else {
+      console.error(`Downloading ${baseName}...`);
+      try {
+        await ensureBinary(platformDir, baseName, showProgress);
+        console.error(""); // newline after progress
+      } catch (err) {
+        console.error(`\nDownload failed: ${err.message}`);
+        process.exit(1);
+      }
     }
   }
 
