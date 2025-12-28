@@ -650,7 +650,8 @@ export function ProjectSettings() {
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground pl-6">
-                  When creating new tasks, automatically select the remote branch instead of the current local branch
+                  When creating new tasks, automatically select the remote
+                  branch instead of the current local branch
                 </p>
               </div>
 

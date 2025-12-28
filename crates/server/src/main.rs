@@ -130,7 +130,10 @@ async fn main() -> Result<(), VibeKanbanError> {
                     );
                 }
             } else {
-                tracing::info!("Browser opening disabled by configuration. Please open http://127.0.0.1:{} manually.", actual_port);
+                tracing::info!(
+                    "Browser opening disabled by configuration. Please open http://127.0.0.1:{} manually.",
+                    actual_port
+                );
             }
         });
     }

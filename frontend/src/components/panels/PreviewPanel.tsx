@@ -127,7 +127,13 @@ export function PreviewPanel() {
       setShowLogs(true);
       setLoadingTimeFinished(false);
     }
-  }, [loadingTimeFinished, isReady, iframeLoaded, latestDevServerProcess, runningDevServer]);
+  }, [
+    loadingTimeFinished,
+    isReady,
+    iframeLoaded,
+    latestDevServerProcess,
+    runningDevServer,
+  ]);
 
   const isPreviewReady =
     (previewState.status === 'ready' && Boolean(previewState.url)) ||
