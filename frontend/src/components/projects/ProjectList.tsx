@@ -7,10 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Project } from 'shared/types';
 import { ProjectFormDialog } from '@/components/dialogs/projects/ProjectFormDialog';
-import { AlertCircle, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, Loader2, Plus, Download, Upload } from 'lucide-react';
 import ProjectCard from '@/components/projects/ProjectCard.tsx';
 import { useKeyCreate, Scope } from '@/keyboard';
 import { useProjects } from '@/hooks/useProjects';
+import { projectsApi } from '@/lib/api';
+import { useRef } from 'react';
 
 export function ProjectList() {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ export function ProjectList() {
   const { projects, isLoading, error: projectsError } = useProjects();
   const [error, setError] = useState('');
   const [focusedProjectId, setFocusedProjectId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateProject = async () => {
     try {
@@ -26,6 +29,45 @@ export function ProjectList() {
     } catch (error) {
       // User cancelled - do nothing
     }
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const data = await projectsApi.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vibe-kanban-projects-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setError('Failed to export projects');
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const imports = Array.isArray(data) ? data : [data];
+      await projectsApi.import(imports);
+      window.location.reload(); 
+    } catch (error) {
+       setError('Failed to import projects');
+    }
+    event.target.value = '';
   };
 
   // Semantic keyboard shortcut for creating new project
@@ -54,10 +96,27 @@ export function ProjectList() {
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <Button onClick={handleCreateProject}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('createProject')}
-        </Button>
+        <div className="flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImport}
+              className="hidden"
+              accept=".json"
+            />
+            <Button variant="outline" onClick={handleImportClick}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import
+            </Button>
+            <Button variant="outline" onClick={handleExportAll}>
+              <Download className="mr-2 h-4 w-4" />
+              Export All
+            </Button>
+            <Button onClick={handleCreateProject}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('createProject')}
+            </Button>
+        </div>
       </div>
 
       {(error || projectsError) && (
