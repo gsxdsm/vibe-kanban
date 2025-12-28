@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Git hook to run pnpm build-and-update-latest script after commits to release branch
+# This hook will run after every commit
+
+# Get current branch name
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Define release branch patterns (you can modify these as needed)
+release_branch_patterns=("main" "master" "release" "release/*" "prod" "production")
+
+# Check if current branch matches any release branch pattern
+is_release_branch=false
+for pattern in "${release_branch_patterns[@]}"; do
+    if [[ $current_branch == $pattern ]]; then
+        is_release_branch=true
+        break
+    fi
+done
+
+# Only run build if on a release branch
+if [ "$is_release_branch" = true ]; then
+    echo "Detected commit on release branch: $current_branch"
+    echo "Running pnpm build-and-update-latest process..."
+
+    # Change to the project directory (where the git worktree is located)
+    PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+    cd "$PROJECT_DIR"
+
+    # Check if we're in the right directory
+    if [ ! -f "./package.json" ]; then
+        echo "Error: package.json not found in current directory: $(pwd)"
+        exit 1
+    fi
+
+    echo "Current directory: $(pwd)"
+
+    # Run the combined build and update script
+    echo "Executing pnpm build-and-update-latest script..."
+    pnpm run build-and-update-latest
+else
+    echo "Not on a release branch ($current_branch), skipping build"
+fi
