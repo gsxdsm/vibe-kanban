@@ -38,12 +38,48 @@ import { useUserSystem } from '@/components/ConfigProvider';
 import { TagManager } from '@/components/TagManager';
 
 const ADJECTIVES = [
-  "happy", "sunny", "clever", "brave", "calm", "eager", "gentle", "lucky", "proud", "swift",
-  "bright", "cool", "fair", "good", "kind", "neat", "nice", "pure", "wise", "warm",
+  'happy',
+  'sunny',
+  'clever',
+  'brave',
+  'calm',
+  'eager',
+  'gentle',
+  'lucky',
+  'proud',
+  'swift',
+  'bright',
+  'cool',
+  'fair',
+  'good',
+  'kind',
+  'neat',
+  'nice',
+  'pure',
+  'wise',
+  'warm',
 ];
 const NOUNS = [
-  "panda", "tiger", "eagle", "dolphin", "falcon", "koala", "lion", "owl", "wolf", "zebra",
-  "bear", "cat", "dog", "fox", "hawk", "kite", "lynx", "moth", "seal", "swan",
+  'panda',
+  'tiger',
+  'eagle',
+  'dolphin',
+  'falcon',
+  'koala',
+  'lion',
+  'owl',
+  'wolf',
+  'zebra',
+  'bear',
+  'cat',
+  'dog',
+  'fox',
+  'hawk',
+  'kite',
+  'lynx',
+  'moth',
+  'seal',
+  'swan',
 ];
 
 export function GeneralSettings() {
@@ -514,7 +550,10 @@ export function GeneralSettings() {
               }
             />
             <div className="space-y-0.5">
-              <Label htmlFor="auto-open-pr-in-browser" className="cursor-pointer">
+              <Label
+                htmlFor="auto-open-pr-in-browser"
+                className="cursor-pointer"
+              >
                 {t('settings.general.pullRequests.autoOpenInBrowser.label')}
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -778,7 +817,10 @@ export function GeneralSettings() {
               }
             />
             <div className="space-y-0.5">
-              <Label htmlFor="auto-open-app-in-browser" className="cursor-pointer">
+              <Label
+                htmlFor="auto-open-app-in-browser"
+                className="cursor-pointer"
+              >
                 {t('settings.general.privacy.autoOpenApp.label')}
               </Label>
               <p className="text-sm text-muted-foreground">

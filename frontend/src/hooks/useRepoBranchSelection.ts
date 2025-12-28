@@ -67,9 +67,11 @@ export function useRepoBranchSelection({
             const currentBranch = branches.find((b) => b.is_current);
             if (currentBranch) {
               // Look for matching remote branch (e.g., origin/main for main)
-              const remoteBranch = branches.find((b) =>
-                b.is_remote &&
-                (b.name.includes('/') && b.name.split('/').pop() === currentBranch.name)
+              const remoteBranch = branches.find(
+                (b) =>
+                  b.is_remote &&
+                  b.name.includes('/') &&
+                  b.name.split('/').pop() === currentBranch.name
               );
               if (remoteBranch) {
                 targetBranch = remoteBranch.name;

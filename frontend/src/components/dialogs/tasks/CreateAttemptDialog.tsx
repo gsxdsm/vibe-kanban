@@ -136,10 +136,10 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
 
     const canCreate = Boolean(
       effectiveProfile &&
-      allBranchesSelected &&
-      projectRepos.length > 0 &&
-      !isCreating &&
-      !isLoadingInitial
+        allBranchesSelected &&
+        projectRepos.length > 0 &&
+        !isCreating &&
+        !isLoadingInitial
     );
 
     const handleCreate = async () => {
