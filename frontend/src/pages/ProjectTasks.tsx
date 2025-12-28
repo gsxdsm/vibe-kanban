@@ -208,6 +208,17 @@ export function ProjectTasks() {
   useEffect(() => {
     if (!isLoaded || !isPanelOpen || seen) return;
 
+    // Skip feature showcase in development mode
+    const isDevelopment = import.meta.env.MODE === 'development';
+    if (isDevelopment) {
+      if (!seenFeatures.includes(showcaseId)) {
+        void updateAndSaveConfig({
+          showcases: { seen_features: [...seenFeatures, showcaseId] },
+        });
+      }
+      return;
+    }
+
     FeatureShowcaseDialog.show({ config: showcases.taskPanel }).finally(() => {
       FeatureShowcaseDialog.hide();
       if (seenFeatures.includes(showcaseId)) return;
