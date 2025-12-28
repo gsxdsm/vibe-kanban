@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Git hook to run pnpm build and update script after commits to release branch
+# Git hook to run pnpm build-and-update-latest script after commits to release branch
 # This hook will run after every commit
 
 # Get current branch name
@@ -21,7 +21,7 @@ done
 # Only run build if on a release branch
 if [ "$is_release_branch" = true ]; then
     echo "Detected commit on release branch: $current_branch"
-    echo "Running pnpm build and update process..."
+    echo "Running pnpm build-and-update-latest process..."
 
     # Change to the project directory (where the git worktree is located)
     PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -35,13 +35,9 @@ if [ "$is_release_branch" = true ]; then
 
     echo "Current directory: $(pwd)"
 
-    # Run the pnpm build script
-    echo "Executing pnpm build:npx script..."
-    pnpm run build:npx
-
-    # Run the update-latest script after successful build
-    echo "Executing pnpm update-latest script..."
-    pnpm run update-latest
+    # Run the combined build and update script
+    echo "Executing pnpm build-and-update-latest script..."
+    pnpm run build-and-update-latest
 else
     echo "Not on a release branch ($current_branch), skipping build"
 fi
