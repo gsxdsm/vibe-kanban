@@ -6,7 +6,7 @@
     "vibe-kanban": "npx-cli/bin/cli.js"
   },
   "files": [
-    "npx-cli/bin/cli.js",
+    "npx-cli/bin/**",
     "npx-cli/dist/**"
   ],
   "scripts": {
@@ -35,6 +35,9 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
   },
   "engines": {
     "node": ">=18",
