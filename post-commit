@@ -12,7 +12,7 @@ release_branch_patterns=("main" "master" "release" "release/*" "prod" "productio
 # Check if current branch matches any release branch pattern
 is_release_branch=false
 for pattern in "${release_branch_patterns[@]}"; do
-    if [[ $current_branch == $pattern ]] || [[ $current_branch == ${pattern#/*/}/* ]]; then
+    if [[ $current_branch == $pattern ]]; then
         is_release_branch=true
         break
     fi
