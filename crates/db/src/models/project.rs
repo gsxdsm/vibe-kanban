@@ -219,7 +219,9 @@ impl Project {
         let dev_script = payload.dev_script.clone();
         let dev_script_working_dir = payload.dev_script_working_dir.clone();
         let default_agent_working_dir = payload.default_agent_working_dir.clone();
-        let prefer_remote_branch = payload.prefer_remote_branch.unwrap_or(existing.prefer_remote_branch);
+        let prefer_remote_branch = payload
+            .prefer_remote_branch
+            .unwrap_or(existing.prefer_remote_branch);
 
         sqlx::query_as!(
             Project,

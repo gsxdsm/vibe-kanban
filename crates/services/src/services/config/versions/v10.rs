@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 pub use v9::{
-    EditorConfig, EditorType, GitHubConfig, ShowcaseState, SoundFile,
-    ThemeMode, UiLanguage,
+    EditorConfig, EditorType, GitHubConfig, ShowcaseState, SoundFile, ThemeMode, UiLanguage,
 };
 
 use crate::services::config::versions::v9;
@@ -42,7 +41,10 @@ fn default_ntfy_topic() -> Option<String> {
     // Use third byte for a small random number suffix to ensure higher uniqueness
     let suffix = bytes[2] as u16 % 100;
 
-    Some(format!("vibe_kanban_{}_{}_{}", adjectives[adj_idx], nouns[noun_idx], suffix))
+    Some(format!(
+        "vibe_kanban_{}_{}_{}",
+        adjectives[adj_idx], nouns[noun_idx], suffix
+    ))
 }
 
 fn default_auto_open_pr_in_browser() -> bool {

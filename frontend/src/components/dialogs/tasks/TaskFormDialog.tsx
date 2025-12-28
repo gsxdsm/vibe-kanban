@@ -67,11 +67,11 @@ export type TaskFormDialogProps =
   | { mode: 'edit'; projectId: string; task: Task }
   | { mode: 'duplicate'; projectId: string; initialTask: Task }
   | {
-    mode: 'subtask';
-    projectId: string;
-    parentTaskAttemptId: string;
-    initialBaseBranch: string;
-  };
+      mode: 'subtask';
+      projectId: string;
+      parentTaskAttemptId: string;
+      initialBaseBranch: string;
+    };
 
 type RepoBranch = { repoId: string; branch: string };
 
@@ -554,7 +554,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
                                 className={cn(
                                   'flex-1 min-w-0',
                                   isSubmitting &&
-                                  'opacity-50 pointer-events-none'
+                                    'opacity-50 pointer-events-none'
                                 )}
                               >
                                 <BranchSelector

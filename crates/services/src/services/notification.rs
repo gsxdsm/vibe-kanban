@@ -43,7 +43,9 @@ impl NotificationService {
     /// Send ntfy notification
     async fn send_ntfy_notification(config: &NotificationConfig, title: &str, message: &str) {
         let Some(url) = &config.ntfy_url else { return };
-        let Some(topic) = &config.ntfy_topic else { return };
+        let Some(topic) = &config.ntfy_topic else {
+            return;
+        };
 
         let url = if url.ends_with('/') {
             format!("{}{}", url, topic)
