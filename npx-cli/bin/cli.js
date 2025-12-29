@@ -145,7 +145,7 @@ async function extractAndRun(baseName, launch) {
       console.error("Extraction failed:", err.message);
       try {
         fs.unlinkSync(zipPath);
-      } catch {}
+      } catch { }
       process.exit(1);
     }
   }
@@ -160,7 +160,7 @@ async function extractAndRun(baseName, launch) {
   if (platform !== "win32") {
     try {
       fs.chmodSync(binPath, 0o755);
-    } catch {}
+    } catch { }
   }
 
   return launch(binPath);
@@ -185,7 +185,7 @@ async function main() {
           }, 2000);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   if (isMcpMode) {
