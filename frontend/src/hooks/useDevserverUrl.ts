@@ -71,9 +71,12 @@ export const useDevserverUrlFromLogs = (
       return;
     }
 
+    // Reset when logs are cleared (new process started)
     if (logs.length < lastIndexRef.current) {
       lastIndexRef.current = 0;
       setUrlInfo(undefined);
+      // Return early - we'll re-run on next render with cleared state
+      return;
     }
 
     if (urlInfo) {
@@ -93,7 +96,7 @@ export const useDevserverUrlFromLogs = (
     });
 
     if (detectedUrl) {
-      setUrlInfo((prev) => prev ?? detectedUrl);
+      setUrlInfo(detectedUrl);
     }
 
     lastIndexRef.current = logs.length;
