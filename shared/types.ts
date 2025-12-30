@@ -6,10 +6,6 @@
 
 export type SharedTaskResponse = { task: SharedTask, user: UserData | null, };
 
-export type ProjectRepoExport = { display_name: string, git_repo_path: string, setup_script: string | null, cleanup_script: string | null, copy_files: string | null, parallel_setup_script: boolean, };
-
-export type ProjectExport = { name: string, dev_script: string | null, dev_script_working_dir: string | null, default_agent_working_dir: string | null, prefer_remote_branch: boolean, repositories: Array<ProjectRepoExport>, };
-
 export type AssigneesQuery = { project_id: string, };
 
 export type SharedTask = { id: string, organization_id: string, project_id: string, creator_user_id: string | null, assignee_user_id: string | null, deleted_by_user_id: string | null, title: string, description: string | null, status: TaskStatus, deleted_at: string | null, shared_at: string | null, created_at: string, updated_at: string, };
