@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ const RunCommandDialogImpl = NiceModal.create<RunCommandDialogProps>(
     const modal = useModal();
     const { t } = useTranslation(['tasks', 'common']);
     const [command, setCommand] = useState(initialCommand ?? '');
+    const [searchParams, setSearchParams] = useSearchParams();
     const [timeoutSeconds, setTimeoutSeconds] = useState<string>(
       initialTimeout !== undefined ? String(initialTimeout) : '10'
     );
@@ -86,6 +88,18 @@ const RunCommandDialogImpl = NiceModal.create<RunCommandDialogProps>(
           const executionProcessId = result.data.id;
           setExpandedKey(`tool-entry:${executionProcessId}:0`, true);
 
+          if (
+            trimmedCommand.includes('npm run dev') ||
+            trimmedCommand.includes('npm start') ||
+            trimmedCommand.includes('yarn dev') ||
+            trimmedCommand.includes('yarn start') ||
+            trimmedCommand.includes('pnpm dev') ||
+            trimmedCommand.includes('pnpm start')
+          ) {
+            const params = new URLSearchParams(searchParams);
+            params.set('view', 'preview');
+            setSearchParams(params, { replace: true });
+          }
           // Command submitted successfully - close dialog
           // Output will appear in the chat history
           modal.hide();
