@@ -58,23 +58,31 @@ if [ "$DRY_RUN" = true ]; then
     echo "--- DRY RUN MODE ---"
 fi
 
+# Determine if we are bumping or setting a specific version
+IS_BUMP=false
+if [[ "$VERSION_TYPE" =~ ^(major|minor|patch)$ ]]; then
+    IS_BUMP=true
+fi
+
 # 1. Update root package.json
 echo "Updating root package.json..."
 if [ "$DRY_RUN" = true ]; then
-    # Calculate next version without modifying files
-    CURRENT_VERSION=$(node -p "require('./package.json').version")
-    if [[ "$VERSION_TYPE" == "major" ]] || [[ "$VERSION_TYPE" == "minor" ]] || [[ "$VERSION_TYPE" == "patch" ]]; then
+    # Calculate next version without modifying files for display
+    if [ "$IS_BUMP" = true ]; then
         NEW_VERSION=$(node -e "
-            const semver = require('./package.json').version.split('.').map(Number);
+            const current = require('./package.json').version;
+            const semver = current.split('.').map(Number);
             if ('$VERSION_TYPE' === 'major') { semver[0]++; semver[1] = 0; semver[2] = 0; }
             else if ('$VERSION_TYPE' === 'minor') { semver[1]++; semver[2] = 0; }
             else if ('$VERSION_TYPE' === 'patch') { semver[2]++; }
             console.log(semver.join('.'));
         ")
+        echo "[DRY RUN] Would run: npm version $VERSION_TYPE --no-git-tag-version"
     else
         NEW_VERSION="$VERSION_TYPE"
+        echo "[DRY RUN] Would run: npm version $NEW_VERSION --no-git-tag-version"
     fi
-    echo "[DRY RUN] Would update root package.json to $NEW_VERSION"
+    echo "[DRY RUN] Calculated new version: $NEW_VERSION"
 else
     npm version "$VERSION_TYPE" --no-git-tag-version
     NEW_VERSION=$(node -p "require('./package.json').version")
@@ -85,7 +93,7 @@ echo "New version: $NEW_VERSION"
 # 2. Sync frontend package.json
 echo "Updating frontend/package.json..."
 if [ "$DRY_RUN" = true ]; then
-    echo "[DRY RUN] Would update frontend/package.json to $NEW_VERSION"
+    echo "[DRY RUN] Would run: (cd frontend && npm version $NEW_VERSION --no-git-tag-version --allow-same-version)"
 else
     (cd frontend && npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version)
 fi
@@ -93,7 +101,7 @@ fi
 # 3. Sync npx-cli package.json
 echo "Updating npx-cli/package.json..."
 if [ "$DRY_RUN" = true ]; then
-    echo "[DRY RUN] Would update npx-cli/package.json to $NEW_VERSION"
+    echo "[DRY RUN] Would run: (cd npx-cli && npm version $NEW_VERSION --no-git-tag-version --allow-same-version)"
 else
     (cd npx-cli && npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version)
 fi
@@ -101,10 +109,10 @@ fi
 # 4. Update Cargo workspace
 echo "Updating Cargo workspace..."
 if [ "$DRY_RUN" = true ]; then
-    echo "[DRY RUN] Would run: cargo set-version --workspace $NEW_VERSION"
+    echo "[DRY RUN] Would run: cargo set-version $NEW_VERSION --workspace"
 else
-    if command -v cargo-set-version >/dev/null 2>&1 || cargo set-version --help >/dev/null 2>&1; then
-        cargo set-version --workspace "$NEW_VERSION"
+    if command -v cargo-set-version >/dev/null 2>&1; then
+        cargo set-version "$NEW_VERSION" --workspace
     else
         echo "Warning: cargo-edit (cargo-set-version) not found. Skipping Rust version bump."
         echo "Install it with: cargo install cargo-edit"
