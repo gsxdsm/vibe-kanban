@@ -13,7 +13,7 @@ use axum::{
     routing::{get, post},
 };
 use db::models::{
-    project::{CreateProject, Project, ProjectError, ProjectExport, SearchResult, UpdateProject},
+    project::{CreateProject, Project, ProjectError, SearchResult, UpdateProject},
     project_repo::{CreateProjectRepo, ProjectRepo, UpdateProjectRepo},
     repo::Repo,
 };
@@ -42,39 +42,6 @@ pub struct LinkToExistingRequest {
 pub struct CreateRemoteProjectRequest {
     pub organization_id: Uuid,
     pub name: String,
-}
-
-pub async fn export_all_projects_handler(
-    State(deployment): State<DeploymentImpl>,
-) -> Result<ResponseJson<ApiResponse<Vec<ProjectExport>>>, ApiError> {
-    let exports = deployment
-        .project()
-        .export_all_projects(&deployment.db().pool)
-        .await?;
-    Ok(ResponseJson(ApiResponse::success(exports)))
-}
-
-pub async fn export_project_handler(
-    State(deployment): State<DeploymentImpl>,
-    Extension(project): Extension<Project>,
-) -> Result<ResponseJson<ApiResponse<ProjectExport>>, ApiError> {
-    let export = deployment
-        .project()
-        .export_project(&deployment.db().pool, project.id)
-        .await?;
-    Ok(ResponseJson(ApiResponse::success(export)))
-}
-
-pub async fn import_projects_handler(
-    State(deployment): State<DeploymentImpl>,
-    Json(payload): Json<Vec<ProjectExport>>,
-) -> Result<ResponseJson<ApiResponse<Vec<Project>>>, ApiError> {
-    let projects = deployment
-        .project()
-        .import_projects(&deployment.db().pool, deployment.repo(), payload)
-        .await?;
-
-    Ok(ResponseJson(ApiResponse::success(projects)))
 }
 
 pub async fn get_projects(
@@ -621,7 +588,6 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             "/",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route("/export", get(export_project_handler))
         .route("/remote/members", get(get_project_remote_members))
         .route("/search", get(search_project_files))
         .route("/open-editor", post(open_project_in_editor))
@@ -641,8 +607,6 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
 
     let projects_router = Router::new()
         .route("/", get(get_projects).post(create_project))
-        .route("/export", get(export_all_projects_handler))
-        .route("/import", post(import_projects_handler))
         .route(
             "/{project_id}/repositories/{repo_id}",
             get(get_project_repository)

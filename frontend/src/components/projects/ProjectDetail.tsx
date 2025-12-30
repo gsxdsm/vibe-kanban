@@ -22,7 +22,6 @@ import {
   Edit,
   Loader2,
   Trash2,
-  Download,
 } from 'lucide-react';
 
 interface ProjectDetailProps {
@@ -60,26 +59,6 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
 
   const handleEditClick = () => {
     navigate(`/settings/projects?projectId=${projectId}`);
-  };
-
-  const handleExport = async () => {
-    if (!project) return;
-    try {
-      const data = await projectsApi.export(projectId);
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${project.name.toLowerCase().replace(/\s+/g, '-')}-export-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-       console.error('Failed to export project', error);
-    }
   };
 
   if (isLoading) {
@@ -138,10 +117,6 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
           <Button onClick={() => navigate(`/projects/${projectId}/tasks`)}>
             <CheckSquare className="mr-2 h-4 w-4" />
             View Tasks
-          </Button>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
           </Button>
           <Button variant="outline" onClick={handleEditClick}>
             <Edit className="mr-2 h-4 w-4" />
