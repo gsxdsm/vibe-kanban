@@ -58,7 +58,6 @@ export function NextActionCard({
   const { t } = useTranslation('tasks');
   const { config } = useUserSystem();
   const { project } = useProject();
-  const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const [copied, setCopied] = useState(false);
 
@@ -108,10 +107,6 @@ export function NextActionCard({
       });
     }
   }, [sessionId, latestDevServerProcess?.id]);
-
-  const handleOpenDiffs = useCallback(() => {
-    navigate({ search: '?view=diffs' });
-  }, [navigate]);
 
   const handleTryAgain = useCallback(() => {
     if (!attempt?.task_id) return;
@@ -190,7 +185,10 @@ export function NextActionCard({
           {/* Left: Diff summary */}
           {!error && (
             <button
-              onClick={handleOpenDiffs}
+              onClick={() => setSearchParams(prev => {
+                prev.set('view', 'diffs');
+                return prev;
+              })}
               className="flex items-center gap-1.5 text-sm shrink-0 cursor-pointer hover:underline transition-all"
               aria-label={t('attempt.diffs')}
             >
@@ -241,7 +239,10 @@ export function NextActionCard({
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0"
-                    onClick={handleOpenDiffs}
+                    onClick={() => setSearchParams(prev => {
+                      prev.set('view', 'diffs');
+                      return prev;
+                    })}
                     aria-label={t('attempt.diffs')}
                   >
                     <FileDiff className="h-3.5 w-3.5" />
