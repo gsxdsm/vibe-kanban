@@ -23,7 +23,8 @@ interface UseDiffStreamResult {
 
 /** Query key for diff stream refresh - invalidate this to force reconnection */
 export const diffStreamKeys = {
-  refresh: (attemptId: string | null) => ['diffStreamRefresh', attemptId] as const,
+  refresh: (attemptId: string | null) =>
+    ['diffStreamRefresh', attemptId] as const,
 };
 
 export const useDiffStream = (
