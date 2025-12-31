@@ -118,11 +118,16 @@ export function PreviewPanel() {
     startTimer();
   }, []);
 
+  const isPreviewReady =
+    (previewState.status === 'ready' && Boolean(previewState.url)) ||
+    (customUrl !== null && runningDevServer);
+
   useEffect(() => {
     if (
       loadingTimeFinished &&
       !isReady &&
       !iframeLoaded &&
+      !isPreviewReady &&
       latestDevServerProcess &&
       runningDevServer
     ) {
@@ -134,13 +139,11 @@ export function PreviewPanel() {
     loadingTimeFinished,
     isReady,
     iframeLoaded,
+    isPreviewReady,
     latestDevServerProcess,
     runningDevServer,
   ]);
 
-  const isPreviewReady =
-    (previewState.status === 'ready' && Boolean(previewState.url)) ||
-    (customUrl !== null && runningDevServer);
   const isPreviewReadyWithoutError = isPreviewReady && !iframeError;
     (previewState.status === 'ready' && Boolean(previewState.url)) ||
     (customUrl !== null && runningDevServer);
