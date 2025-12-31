@@ -543,26 +543,6 @@ export function GeneralSettings() {
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="auto-open-pr-in-browser"
-              checked={draft?.auto_open_pr_in_browser ?? true}
-              onCheckedChange={(checked: boolean) =>
-                updateDraft({ auto_open_pr_in_browser: checked })
-              }
-            />
-            <div className="space-y-0.5">
-              <Label
-                htmlFor="auto-open-pr-in-browser"
-                className="cursor-pointer"
-              >
-                {t('settings.general.pullRequests.autoOpenInBrowser.label')}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t('settings.general.pullRequests.autoOpenInBrowser.helper')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
               id="use-custom-prompt"
               checked={draft?.pr_auto_description_prompt != null}
               onCheckedChange={(checked: boolean) => {
@@ -805,26 +785,6 @@ export function GeneralSettings() {
               </Label>
               <p className="text-sm text-muted-foreground">
                 {t('settings.general.privacy.telemetry.helper')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="auto-open-app-in-browser"
-              checked={draft?.auto_open_app_in_browser ?? true}
-              onCheckedChange={(checked: boolean) =>
-                updateDraft({ auto_open_app_in_browser: checked })
-              }
-            />
-            <div className="space-y-0.5">
-              <Label
-                htmlFor="auto-open-app-in-browser"
-                className="cursor-pointer"
-              >
-                {t('settings.general.privacy.autoOpenApp.label')}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t('settings.general.privacy.autoOpenApp.helper')}
               </p>
             </div>
           </div>
