@@ -142,10 +142,6 @@
           "label": "默认自动生成PR描述",
           "helper": "启用后，AI代理将在创建PR后自动更新标题和描述。"
         },
-        "autoOpenInBrowser": {
-          "label": "在浏览器中自动打开拉取请求",
-          "helper": "启用后，拉取请求在创建后会自动在默认浏览器中打开。"
-        },
         "customPrompt": {
           "useCustom": "使用自定义提示",
           "helper": "生成PR描述时AI代理使用的自定义提示。使用{pr_number}和{pr_url}作为占位符。"
@@ -172,10 +168,6 @@
         "telemetry": {
           "label": "启用遥测",
           "helper": "启用匿名使用事件跟踪以帮助改进应用程序。不会收集提示或项目信息。"
-        },
-        "autoOpenApp": {
-          "label": "启动时在浏览器中自动打开应用",
-          "helper": "启用后，Vibe Kanban UI 会在应用程序启动时自动在浏览器中打开。"
         }
       },
       "taskTemplates": {

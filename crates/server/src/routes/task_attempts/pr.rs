@@ -314,12 +314,9 @@ pub async fn create_github_pr(
                 tracing::error!("Failed to update workspace PR status: {}", e);
             }
 
-            // Auto-open PR in browser if config allows it
-            let config = deployment.config().read().await;
-            if config.auto_open_pr_in_browser {
-                if let Err(e) = utils::browser::open_browser(&pr_info.url).await {
-                    tracing::warn!("Failed to open PR in browser: {}", e);
-                }
+            // Auto-open PR in browser
+            if let Err(e) = utils::browser::open_browser(&pr_info.url).await {
+                tracing::warn!("Failed to open PR in browser: {}", e);
             }
             deployment
                 .track_if_analytics_allowed(
