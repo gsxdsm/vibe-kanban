@@ -185,9 +185,10 @@ export function NextActionCard({
             <button
               onClick={() =>
                 setSearchParams((prev) => {
-                  prev.set('view', 'diffs');
-                  return prev;
-                })
+                  const next = new URLSearchParams(prev);
+                  next.set('view', 'diffs');
+                  return next;
+                }, { replace: true })
               }
               className="flex items-center gap-1.5 text-sm shrink-0 cursor-pointer hover:underline transition-all"
               aria-label={t('attempt.diffs')}
@@ -241,9 +242,10 @@ export function NextActionCard({
                     className="h-7 w-7 p-0"
                     onClick={() =>
                       setSearchParams((prev) => {
-                        prev.set('view', 'diffs');
-                        return prev;
-                      })
+                        const next = new URLSearchParams(prev);
+                        next.set('view', 'diffs');
+                        return next;
+                      }, { replace: true })
                     }
                     aria-label={t('attempt.diffs')}
                   >
@@ -312,9 +314,10 @@ export function NextActionCard({
                           : () => {
                               start();
                               setSearchParams((prev) => {
-                                prev.set('view', 'preview');
-                                return prev;
-                              });
+                                const next = new URLSearchParams(prev);
+                                next.set('view', 'preview');
+                                return next;
+                              }, { replace: true });
                             }
                       }
                       disabled={
