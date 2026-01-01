@@ -1251,6 +1251,20 @@ pub async fn cherry_pick_to_new_branch(
                         },
                     )))
                 }
+                GitServiceError::BranchNotFound(branch) => {
+                    Ok(ResponseJson(ApiResponse::error_with_data(
+                        CherryPickToNewBranchError::BaseBranchNotFound {
+                            branch_name: branch,
+                        },
+                    )))
+                }
+                GitServiceError::InvalidRepository(msg) => {
+                    // Map InvalidRepository errors to CherryPickConflicts with the message
+                    // This provides a user-friendly error instead of "unknown error"
+                    Ok(ResponseJson(ApiResponse::error_with_data(
+                        CherryPickToNewBranchError::CherryPickConflicts { message: msg },
+                    )))
+                }
                 other => Err(ApiError::GitService(other)),
             }
         }
