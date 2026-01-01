@@ -376,7 +376,8 @@
         "emptyName": "Branch name cannot be empty",
         "sameName": "New branch name must be different from current branch",
         "hasSpaces": "Branch name cannot contain spaces",
-        "noBaseBranch": "Please select a base branch"
+        "noBaseBranch": "Please select a base branch",
+        "noTaskStartCommit": "Could not find starting commit for this task. The task may not have any recorded changes yet."
       }
     }
   },

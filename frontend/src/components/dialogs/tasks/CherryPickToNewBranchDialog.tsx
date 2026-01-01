@@ -11,9 +11,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BranchSelector from '@/components/tasks/BranchSelector';
-import type { GitBranch, CherryPickToNewBranchResponse } from 'shared/types';
+import type { GitBranch, CherryPickToNewBranchResponse, CherryPickToNewBranchError } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { defineModal, getErrorMessage } from '@/lib/modals';
+import { defineModal } from '@/lib/modals';
 import { useCherryPickToNewBranch } from '@/hooks/useCherryPickToNewBranch';
 
 export interface CherryPickToNewBranchDialogProps {
@@ -39,6 +39,37 @@ const CherryPickToNewBranchDialogImpl =
       const [baseBranch, setBaseBranch] = useState<string>(targetBranchName);
       const [error, setError] = useState<string | null>(null);
 
+      // Map API error types to user-friendly messages
+      const getApiErrorMessage = (apiError: CherryPickToNewBranchError | undefined): string => {
+        if (!apiError) {
+          return t('cherryPickToNewBranch.dialog.error');
+        }
+        switch (apiError.type) {
+          case 'empty_branch_name':
+            return t('cherryPickToNewBranch.dialog.errors.emptyName');
+          case 'invalid_branch_name_format':
+            return t('cherryPickToNewBranch.dialog.errors.emptyName');
+          case 'branch_already_exists':
+            return `Branch "${apiError.branch_name}" already exists`;
+          case 'base_branch_not_found':
+            return `Base branch "${apiError.branch_name}" not found`;
+          case 'no_commits_to_cherry_pick':
+            return 'No commits to cherry-pick. The task may not have any changes.';
+          case 'no_task_start_commit':
+            return t('cherryPickToNewBranch.dialog.errors.noTaskStartCommit');
+          case 'rebase_in_progress':
+            return `A rebase is in progress in ${apiError.repo_name}. Complete or abort it first.`;
+          case 'cherry_pick_in_progress':
+            return `A cherry-pick is in progress in ${apiError.repo_name}. Complete or abort it first.`;
+          case 'worktree_dirty':
+            return `${apiError.repo_name} has uncommitted changes. Commit or stash them first.`;
+          case 'cherry_pick_conflicts':
+            return apiError.message;
+          default:
+            return t('cherryPickToNewBranch.dialog.error');
+        }
+      };
+
       const cherryPickMutation = useCherryPickToNewBranch(
         attemptId,
         repoId,
@@ -51,7 +82,8 @@ const CherryPickToNewBranchDialogImpl =
           modal.hide();
         },
         (err) => {
-          setError(getErrorMessage(err) || t('cherryPickToNewBranch.dialog.error'));
+          const apiError = !err.success ? err.error : undefined;
+          setError(getApiErrorMessage(apiError));
         }
       );
 
