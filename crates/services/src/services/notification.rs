@@ -166,44 +166,10 @@ impl NotificationService {
             vars.insert("{{tool_name}}", String::new());
         }
 
-        // Shell-escape special characters to prevent injection attacks
-        // Does not add wrapping quotes - users control quoting in their script template
-        fn escape_for_shell(value: &str) -> String {
-            if cfg!(target_os = "windows") {
-                // For cmd.exe, escape special characters: & | < > ^ " %
-                let mut escaped = String::with_capacity(value.len());
-                for ch in value.chars() {
-                    match ch {
-                        '&' | '|' | '<' | '>' | '^' | '"' | '%' => {
-                            escaped.push('^');
-                            escaped.push(ch);
-                        }
-                        _ => escaped.push(ch),
-                    }
-                }
-                escaped
-            } else {
-                // For POSIX sh, escape special characters with backslash
-                let mut escaped = String::with_capacity(value.len());
-                for ch in value.chars() {
-                    match ch {
-                        '\'' | '"' | '\\' | '$' | '`' | '!' | '*' | '?' | '[' | ']' | '#'
-                        | '~' | '&' | '|' | ';' | '(' | ')' | '<' | '>' | ' ' | '\t' | '\n' => {
-                            escaped.push('\\');
-                            escaped.push(ch);
-                        }
-                        _ => escaped.push(ch),
-                    }
-                }
-                escaped
-            }
-        }
-
-        // Perform variable substitution with shell-escaped values to prevent injection
+        // Perform variable substitution
         let mut command = script_command.to_string();
         for (var, value) in &vars {
-            let escaped_value = escape_for_shell(value);
-            command = command.replace(var, &escaped_value);
+            command = command.replace(var, value);
         }
 
         tracing::debug!("Executing notification script: {}", command);
