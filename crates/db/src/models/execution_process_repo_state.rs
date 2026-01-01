@@ -156,4 +156,30 @@ impl ExecutionProcessRepoState {
         .fetch_all(pool)
         .await
     }
+
+    /// Find the first before_head_commit for a workspace and repo.
+    /// This represents the commit where the task attempt started.
+    pub async fn find_first_before_head_commit_for_workspace(
+        pool: &SqlitePool,
+        workspace_id: Uuid,
+        repo_id: Uuid,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let result = sqlx::query_scalar!(
+            r#"SELECT eprs.before_head_commit
+               FROM execution_process_repo_states eprs
+               JOIN execution_processes ep ON ep.id = eprs.execution_process_id
+               JOIN sessions s ON s.id = ep.session_id
+               WHERE s.workspace_id = $1
+                 AND eprs.repo_id = $2
+                 AND eprs.before_head_commit IS NOT NULL
+               ORDER BY ep.created_at ASC
+               LIMIT 1"#,
+            workspace_id,
+            repo_id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(result.flatten())
+    }
 }

@@ -23,6 +23,7 @@ use axum::{
 };
 use db::models::{
     execution_process::{ExecutionProcess, ExecutionProcessRunReason, ExecutionProcessStatus},
+    execution_process_repo_state::ExecutionProcessRepoState,
     merge::{Merge, MergeStatus, PrMerge, PullRequestInfo},
     project_repo::ProjectRepo,
     repo::{Repo, RepoError},
@@ -95,6 +96,7 @@ pub enum CherryPickToNewBranchError {
     BranchAlreadyExists { branch_name: String },
     BaseBranchNotFound { branch_name: String },
     NoCommitsToCherryPick,
+    NoTaskStartCommit,
     RebaseInProgress { repo_name: String },
     CherryPickInProgress { repo_name: String },
     WorktreeDirty { repo_name: String },
@@ -1212,12 +1214,31 @@ pub async fn cherry_pick_to_new_branch(
         )));
     }
 
+    // Get the starting commit for this task attempt
+    // This is the commit SHA before any task changes were made
+    let task_start_commit =
+        ExecutionProcessRepoState::find_first_before_head_commit_for_workspace(
+            pool,
+            workspace.id,
+            payload.repo_id,
+        )
+        .await?;
+
+    let task_start_commit = match task_start_commit {
+        Some(commit) => commit,
+        None => {
+            return Ok(ResponseJson(ApiResponse::error_with_data(
+                CherryPickToNewBranchError::NoTaskStartCommit,
+            )));
+        }
+    };
+
     // Perform the cherry-pick to new branch operation
     let result = deployment.git().cherry_pick_to_new_branch(
         &repo.path,
         &worktree_path,
         &workspace.branch,
-        &workspace_repo.target_branch,
+        &task_start_commit,
         new_branch_name,
         &payload.base_branch,
     );
