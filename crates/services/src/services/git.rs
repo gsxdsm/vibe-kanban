@@ -1849,9 +1849,12 @@ impl GitService {
     /// that are on `task_branch` but not on `original_base_branch` (i.e., the changes made
     /// as part of the task attempt).
     ///
+    /// IMPORTANT: This operation uses a temporary worktree to perform the cherry-pick,
+    /// ensuring the user's current worktree is never modified.
+    ///
     /// # Arguments
     /// * `repo_path` - Path to the bare repository
-    /// * `worktree_path` - Path to the worktree where the task branch is checked out
+    /// * `worktree_path` - Path to the worktree where the task branch is checked out (used for reading only)
     /// * `task_branch` - The current task branch name
     /// * `original_base_branch` - The branch the task was originally based on
     /// * `new_branch_name` - The name for the new branch to create
@@ -1868,23 +1871,8 @@ impl GitService {
         new_branch_name: &str,
         new_base_branch: &str,
     ) -> Result<String, GitServiceError> {
-        let worktree_repo = Repository::open(worktree_path)?;
         let main_repo = self.open_repo(repo_path)?;
         let git = GitCli::new();
-
-        // Safety: check worktree is clean
-        self.check_worktree_clean(&worktree_repo)?;
-
-        // Refuse if any git operation is in progress
-        if git.is_rebase_in_progress(worktree_path).unwrap_or(false) {
-            return Err(GitServiceError::RebaseInProgress);
-        }
-        if git
-            .is_cherry_pick_in_progress(worktree_path)
-            .unwrap_or(false)
-        {
-            return Err(GitServiceError::CherryPickInProgress);
-        }
 
         // Get the target base branch reference and fetch if remote
         let nbr = Self::find_branch(&main_repo, new_base_branch)?.into_reference();
@@ -1894,9 +1882,10 @@ impl GitService {
 
         // Get the merge base between the task branch and its original base
         // This is where the task's work started
+        // We use repo_path here since we're working with refs, not the worktree
         let merge_base = git
             .git(
-                worktree_path,
+                repo_path,
                 ["merge-base", original_base_branch, task_branch],
             )
             .map(|s| s.trim().to_string())
@@ -1904,14 +1893,17 @@ impl GitService {
                 GitServiceError::InvalidRepository(format!("Failed to find merge base: {e}"))
             })?;
 
-        // Get the current HEAD of the task branch (where the work ends)
-        let task_head = git.get_head_sha(worktree_path).map_err(|e| {
-            GitServiceError::InvalidRepository(format!("Failed to get task HEAD: {e}"))
-        })?;
+        // Get the HEAD of the task branch
+        let task_head = git
+            .git(repo_path, ["rev-parse", task_branch])
+            .map(|s| s.trim().to_string())
+            .map_err(|e| {
+                GitServiceError::InvalidRepository(format!("Failed to get task branch HEAD: {e}"))
+            })?;
 
         // Get the list of commits to cherry-pick
         let commits_to_pick = git
-            .rev_list_range(worktree_path, &merge_base, &task_head)
+            .rev_list_range(repo_path, &merge_base, &task_head)
             .map_err(|e| {
                 GitServiceError::InvalidRepository(format!("Failed to list commits: {e}"))
             })?;
@@ -1920,54 +1912,100 @@ impl GitService {
             return Err(GitServiceError::NoCommitsToCherryPick);
         }
 
-        // Create the new branch at the new base
+        // Create the new branch at the new base (in the bare repo, not touching worktree)
         git.create_branch_at(repo_path, new_branch_name, new_base_branch)
             .map_err(|e| {
                 GitServiceError::InvalidRepository(format!("Failed to create branch: {e}"))
             })?;
 
-        // Checkout the new branch
-        git.checkout_branch(worktree_path, new_branch_name)
-            .map_err(|e| {
-                GitServiceError::InvalidRepository(format!("Failed to checkout branch: {e}"))
-            })?;
+        // Create a temporary worktree for the cherry-pick operation
+        // This ensures we never modify the user's current worktree
+        let temp_worktree_path = worktree_path
+            .parent()
+            .unwrap_or(worktree_path)
+            .join(format!(".tmp-cherry-pick-{}", uuid::Uuid::new_v4()));
 
-        // Ensure identity for any commits produced by cherry-pick
-        self.ensure_cli_commit_identity(worktree_path)?;
+        // Helper to clean up the temporary worktree and optionally the branch
+        let cleanup = |delete_branch: bool| {
+            // Try to remove the worktree
+            let _ = git.worktree_remove(repo_path, &temp_worktree_path, true);
+            // Also try to remove the directory if it still exists
+            let _ = std::fs::remove_dir_all(&temp_worktree_path);
+            // If we need to delete the branch (on failure), do so
+            if delete_branch {
+                let _ = git.git(repo_path, ["branch", "-D", new_branch_name]);
+            }
+        };
 
-        // Cherry-pick the commits
-        if let Err(_e) = git.cherry_pick_range(worktree_path, &merge_base, &task_head) {
-            // If cherry-pick fails (likely due to conflicts), report it
-            let conflicts = git.get_conflicted_files(worktree_path).unwrap_or_default();
-            let files_part = if conflicts.is_empty() {
-                "".to_string()
-            } else {
-                let mut sample = conflicts.clone();
-                let total = sample.len();
-                sample.truncate(10);
-                let list = sample.join(", ");
-                if total > sample.len() {
-                    format!(
-                        " Conflicted files (showing {} of {}): {}.",
-                        sample.len(),
-                        total,
-                        list
-                    )
-                } else {
-                    format!(" Conflicted files: {list}.")
-                }
-            };
-            let msg = format!(
-                "Cherry-pick encountered merge conflicts while applying commits to '{}'.{files_part} Resolve conflicts and then continue or abort.",
-                new_branch_name
-            );
-            return Err(GitServiceError::MergeConflicts(msg));
+        // Add temporary worktree for the new branch
+        if let Err(e) = git.worktree_add(repo_path, &temp_worktree_path, new_branch_name, false) {
+            cleanup(true);
+            return Err(GitServiceError::InvalidRepository(format!(
+                "Failed to create temporary worktree: {e}"
+            )));
         }
 
-        // Get the final HEAD
-        let final_head = git.get_head_sha(worktree_path).map_err(|e| {
-            GitServiceError::InvalidRepository(format!("Failed to get final HEAD: {e}"))
-        })?;
+        // Ensure identity for any commits produced by cherry-pick
+        if let Err(e) = self.ensure_cli_commit_identity(&temp_worktree_path) {
+            cleanup(true);
+            return Err(e);
+        }
+
+        // Cherry-pick the commits one by one for better error handling
+        for commit_sha in &commits_to_pick {
+            if let Err(_e) = git.git(&temp_worktree_path, ["cherry-pick", commit_sha]) {
+                // Cherry-pick failed - get conflict info before cleanup
+                let conflicts = git
+                    .get_conflicted_files(&temp_worktree_path)
+                    .unwrap_or_default();
+
+                // Abort the cherry-pick to clean up
+                let _ = git.git(&temp_worktree_path, ["cherry-pick", "--abort"]);
+
+                // Clean up temporary worktree and delete the branch
+                cleanup(true);
+
+                let files_part = if conflicts.is_empty() {
+                    "".to_string()
+                } else {
+                    let mut sample = conflicts.clone();
+                    let total = sample.len();
+                    sample.truncate(10);
+                    let list = sample.join(", ");
+                    if total > sample.len() {
+                        format!(
+                            " Conflicted files (showing {} of {}): {}.",
+                            sample.len(),
+                            total,
+                            list
+                        )
+                    } else {
+                        format!(" Conflicted files: {list}.")
+                    }
+                };
+
+                let msg = format!(
+                    "Cherry-pick encountered conflicts while applying commit {} to '{}'. {files_part}",
+                    &commit_sha[..7.min(commit_sha.len())],
+                    new_branch_name
+                );
+                return Err(GitServiceError::MergeConflicts(msg));
+            }
+        }
+
+        // Get the final HEAD from the temporary worktree
+        let final_head = match git.get_head_sha(&temp_worktree_path) {
+            Ok(sha) => sha,
+            Err(e) => {
+                cleanup(true);
+                return Err(GitServiceError::InvalidRepository(format!(
+                    "Failed to get final HEAD: {e}"
+                )));
+            }
+        };
+
+        // Clean up temporary worktree but keep the branch (success case)
+        cleanup(false);
 
         Ok(final_head)
     }
