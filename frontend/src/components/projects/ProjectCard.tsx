@@ -127,7 +127,35 @@ function ProjectCard({ project, isFocused, setError, onEdit }: Props) {
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg">{project.name}</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {isSingleRepoProject && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenInIDE();
+                }}
+                title={t('openInIDE')}
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Button>
+            )}
+            {hasDeploymentScript && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRunDeployment();
+                }}
+                title={t('runDeployment')}
+              >
+                <Rocket className="h-4 w-4" />
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
