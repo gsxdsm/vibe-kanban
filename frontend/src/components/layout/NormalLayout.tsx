@@ -18,7 +18,7 @@ export function NormalLayout() {
           <Outlet />
         </div>
       </div>
-      {!shouldHideNavbar && (
+      {!shouldHideNavbar && version && (
         <footer className="px-3 py-1 border-t bg-muted/30 flex justify-end">
           <span className="text-[10px] text-muted-foreground font-medium">
             v{version}
