@@ -156,12 +156,6 @@ pub struct NotificationConfig {
     pub sound_enabled: bool,
     pub push_enabled: bool,
     pub sound_file: SoundFile,
-    #[serde(default)]
-    pub script_enabled: bool,
-    #[serde(default)]
-    pub script_command: Option<String>,
-    #[serde(default)]
-    pub browser_enabled: bool,
 }
 
 impl From<v1::Config> for NotificationConfig {
@@ -170,9 +164,6 @@ impl From<v1::Config> for NotificationConfig {
             sound_enabled: old.sound_alerts,
             push_enabled: old.push_notifications,
             sound_file: SoundFile::from(old.sound_file), // Now SCREAMING_SNAKE_CASE
-            script_enabled: false,
-            script_command: None,
-            browser_enabled: false,
         }
     }
 }
@@ -183,9 +174,6 @@ impl Default for NotificationConfig {
             sound_enabled: true,
             push_enabled: true,
             sound_file: SoundFile::CowMooing,
-            script_enabled: false,
-            script_command: None,
-            browser_enabled: false,
         }
     }
 }
