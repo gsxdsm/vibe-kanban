@@ -1204,18 +1204,6 @@ pub async fn cherry_pick_to_new_branch(
 
     match result {
         Ok(head_sha) => {
-            // Update workspace to use the new branch
-            Workspace::update_branch_name(pool, workspace.id, new_branch_name).await?;
-
-            // Update the target branch for this workspace repo to match the new base
-            WorkspaceRepo::update_target_branch(
-                pool,
-                workspace.id,
-                payload.repo_id,
-                &payload.base_branch,
-            )
-            .await?;
-
             deployment
                 .track_if_analytics_allowed(
                     "task_attempt_cherry_picked_to_new_branch",
@@ -1251,12 +1239,12 @@ pub async fn cherry_pick_to_new_branch(
                         repo_name: repo.name.clone(),
                     },
                 ))),
-                GitServiceError::InvalidRepository(msg) if msg.contains("No commits to cherry-pick") => {
+                GitServiceError::NoCommitsToCherryPick => {
                     Ok(ResponseJson(ApiResponse::error_with_data(
                         CherryPickToNewBranchError::NoCommitsToCherryPick,
                     )))
                 }
-                GitServiceError::InvalidRepository(msg) if msg.contains("Cherry-pick is already in progress") => {
+                GitServiceError::CherryPickInProgress => {
                     Ok(ResponseJson(ApiResponse::error_with_data(
                         CherryPickToNewBranchError::CherryPickInProgress {
                             repo_name: repo.name.clone(),
