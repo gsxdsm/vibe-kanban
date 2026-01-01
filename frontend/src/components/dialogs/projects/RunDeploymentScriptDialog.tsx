@@ -33,11 +33,13 @@ interface RunDeploymentScriptDialogResult {
   started: boolean;
 }
 
+const CURRENT_BRANCH_VALUE = '__current__';
+
 const RunDeploymentScriptDialogImpl =
   NiceModal.create<RunDeploymentScriptDialogProps>(({ project }) => {
     const modal = useModal();
     const { t } = useTranslation('projects');
-    const [selectedBranch, setSelectedBranch] = useState<string>('');
+    const [selectedBranch, setSelectedBranch] = useState<string>(CURRENT_BRANCH_VALUE);
     const [isRunning, setIsRunning] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -61,7 +63,7 @@ const RunDeploymentScriptDialogImpl =
 
       try {
         const result = await projectsApi.runDeploymentScript(project.id, {
-          branch: selectedBranch || null,
+          branch: selectedBranch === CURRENT_BRANCH_VALUE ? null : selectedBranch,
         });
 
         if ('type' in result) {
@@ -147,7 +149,7 @@ const RunDeploymentScriptDialogImpl =
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value={CURRENT_BRANCH_VALUE}>
                     {t('deployment.dialog.currentBranch')}
                   </SelectItem>
                   {branches?.map((branch) => (
