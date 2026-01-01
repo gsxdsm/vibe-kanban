@@ -307,9 +307,16 @@ pub async fn create_github_pr(
                 tracing::error!("Failed to update workspace PR status: {}", e);
             }
 
-            // Auto-open PR in browser
-            if let Err(e) = utils::browser::open_browser(&pr_info.url).await {
-                tracing::warn!("Failed to open PR in browser: {}", e);
+            // Auto-open PR in browser unless disabled by environment variable
+            let auto_open_pr = std::env::var("VK_AUTO_OPEN_PR")
+                .unwrap_or_else(|_| "true".to_string())
+                .to_lowercase()
+                != "false";
+
+            if auto_open_pr {
+                if let Err(e) = utils::browser::open_browser(&pr_info.url).await {
+                    tracing::warn!("Failed to open PR in browser: {}", e);
+                }
             }
             deployment
                 .track_if_analytics_allowed(

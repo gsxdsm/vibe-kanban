@@ -109,6 +109,8 @@ The following environment variables can be configured at build time or runtime:
 | `FRONTEND_PORT` | Runtime | `3000` | Frontend dev server port (dev mode only, overrides PORT) |
 | `HOST` | Runtime | `127.0.0.1` | Backend server host |
 | `DISABLE_WORKTREE_ORPHAN_CLEANUP` | Runtime | Not set | Disable git worktree cleanup (for debugging) |
+| `VK_AUTO_OPEN_APP` | Runtime | `true` | Automatically open the main application in browser on startup |
+| `VK_AUTO_OPEN_PR` | Runtime | `true` | Automatically open pull requests in browser when created |
 
 **Build-time variables** must be set when running `pnpm run build`. **Runtime variables** are read when the application starts.
 
