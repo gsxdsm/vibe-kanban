@@ -2,9 +2,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 use tokio::sync::RwLock;
-use utils;
+use utils::{self, msg_store::MsgStore};
 
-use crate::services::config::{Config, NotificationConfig, SoundFile};
+use crate::services::config::{Config, SoundFile};
+use crate::services::events::browser_notification_patch::{self, BrowserNotification};
 
 /// Event types for script notifications
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,9 +36,23 @@ pub struct NotificationContext {
 }
 
 /// Service for handling cross-platform notifications including sound alerts and push notifications
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct NotificationService {
     config: Arc<RwLock<Config>>,
+    /// Optional events MsgStore for pushing browser notifications via SSE
+    events_msg_store: Option<Arc<MsgStore>>,
+}
+
+impl std::fmt::Debug for NotificationService {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NotificationService")
+            .field("config", &"<config>")
+            .field(
+                "events_msg_store",
+                &self.events_msg_store.as_ref().map(|_| "<MsgStore>"),
+            )
+            .finish()
+    }
 }
 
 /// Cache for WSL root path from PowerShell
@@ -45,7 +60,15 @@ static WSL_ROOT_PATH_CACHE: OnceLock<Option<String>> = OnceLock::new();
 
 impl NotificationService {
     pub fn new(config: Arc<RwLock<Config>>) -> Self {
-        Self { config }
+        Self {
+            config,
+            events_msg_store: None,
+        }
+    }
+
+    pub fn with_events_msg_store(mut self, events_msg_store: Arc<MsgStore>) -> Self {
+        self.events_msg_store = Some(events_msg_store);
+        self
     }
 
     /// Send both sound and push notifications if enabled
@@ -57,16 +80,7 @@ impl NotificationService {
     /// Send notifications with additional context for script variable substitution
     pub async fn notify_with_context(&self, title: &str, message: &str, context: NotificationContext) {
         let config = self.config.read().await.notifications.clone();
-        Self::send_notification(&config, title, message, &context).await;
-    }
 
-    /// Internal method to send notifications with a given config
-    async fn send_notification(
-        config: &NotificationConfig,
-        title: &str,
-        message: &str,
-        context: &NotificationContext,
-    ) {
         if config.sound_enabled {
             Self::play_sound_notification(&config.sound_file).await;
         }
@@ -78,7 +92,35 @@ impl NotificationService {
         if config.script_enabled
             && let Some(ref script_command) = config.script_command
         {
-            Self::execute_script_notification(script_command, title, message, context).await;
+            Self::execute_script_notification(script_command, title, message, &context).await;
+        }
+
+        if config.browser_enabled {
+            self.send_browser_notification(title, message, &context);
+        }
+    }
+
+    /// Send a browser notification via SSE to the frontend
+    fn send_browser_notification(&self, title: &str, message: &str, context: &NotificationContext) {
+        if let Some(ref msg_store) = self.events_msg_store {
+            let notification = BrowserNotification {
+                title: title.to_string(),
+                message: message.to_string(),
+                event: context
+                    .event
+                    .map(|e| e.as_str().to_string())
+                    .unwrap_or_default(),
+                task_title: context.task_title.clone(),
+                task_branch: context.task_branch.clone(),
+                executor: context.executor.clone(),
+                tool_name: context.tool_name.clone(),
+            };
+            let patch = browser_notification_patch::send(notification);
+            msg_store.push_patch(patch);
+        } else {
+            tracing::debug!(
+                "Browser notification skipped: events_msg_store not configured"
+            );
         }
     }
 

@@ -161,6 +161,10 @@
           "label": "Push Notifications",
           "helper": "Show system notifications when task attempts finish running."
         },
+        "browser": {
+          "label": "Browser Notifications",
+          "helper": "Show browser notifications when task attempts finish running. Requires browser permission."
+        },
         "script": {
           "label": "Script Notifications",
           "helper": "Execute a custom script or webhook when notification events occur.",

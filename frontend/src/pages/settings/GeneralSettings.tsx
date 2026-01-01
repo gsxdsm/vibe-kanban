@@ -633,6 +633,28 @@ export function GeneralSettings() {
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox
+              id="browser-notifications"
+              checked={draft?.notifications.browser_enabled}
+              onCheckedChange={(checked: boolean) =>
+                updateDraft({
+                  notifications: {
+                    ...draft!.notifications,
+                    browser_enabled: checked,
+                  },
+                })
+              }
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="browser-notifications" className="cursor-pointer">
+                {t('settings.general.notifications.browser.label')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.general.notifications.browser.helper')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
               id="script-enabled"
               checked={draft?.notifications.script_enabled}
               onCheckedChange={(checked: boolean) =>
