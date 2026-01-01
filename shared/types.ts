@@ -278,7 +278,7 @@ branch: string,
  */
 head_sha: string, };
 
-export type CherryPickToNewBranchError = { "type": "empty_branch_name" } | { "type": "invalid_branch_name_format" } | { "type": "branch_already_exists", branch_name: string, } | { "type": "base_branch_not_found", branch_name: string, } | { "type": "no_commits_to_cherry_pick" } | { "type": "rebase_in_progress", repo_name: string, } | { "type": "cherry_pick_in_progress", repo_name: string, } | { "type": "worktree_dirty", repo_name: string, } | { "type": "cherry_pick_conflicts", message: string, };
+export type CherryPickToNewBranchError = { "type": "empty_branch_name" } | { "type": "invalid_branch_name_format" } | { "type": "branch_already_exists", branch_name: string, } | { "type": "base_branch_not_found", branch_name: string, } | { "type": "no_commits_to_cherry_pick" } | { "type": "no_task_start_commit" } | { "type": "rebase_in_progress", repo_name: string, } | { "type": "cherry_pick_in_progress", repo_name: string, } | { "type": "worktree_dirty", repo_name: string, } | { "type": "cherry_pick_conflicts", message: string, };
 
 export type GitOperationError = { "type": "merge_conflicts", message: string, op: ConflictOp, } | { "type": "rebase_in_progress" };
 
