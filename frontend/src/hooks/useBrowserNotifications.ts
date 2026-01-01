@@ -77,7 +77,8 @@ export function useBrowserNotifications() {
     const eventSource = new EventSource('/api/events');
     eventSourceRef.current = eventSource;
 
-    eventSource.onmessage = (event) => {
+    // Listen for json_patch events (SSE named event type)
+    const handleJsonPatch = (event: MessageEvent) => {
       try {
         const patches = JSON.parse(event.data);
 
@@ -95,6 +96,8 @@ export function useBrowserNotifications() {
         // Ignore parse errors for non-JSON messages
       }
     };
+
+    eventSource.addEventListener('json_patch', handleJsonPatch);
 
     eventSource.onerror = () => {
       // SSE will automatically reconnect
