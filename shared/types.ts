@@ -190,7 +190,7 @@ export type RunDeploymentScriptRequest = {
  */
 branch: string | null, };
 
-export type RunDeploymentScriptResponse = { started: boolean, message: string, };
+export type RunDeploymentScriptResponse = { started: boolean, message: string, stdout: string | null, stderr: string | null, exit_code: number | null, };
 
 export type RunDeploymentScriptError = { "type": "no_script_configured" } | { "type": "no_repositories" } | { "type": "git_checkout_failed", message: string, };
 

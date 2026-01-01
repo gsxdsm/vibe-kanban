@@ -592,6 +592,9 @@ pub struct RunDeploymentScriptRequest {
 pub struct RunDeploymentScriptResponse {
     pub started: bool,
     pub message: String,
+    pub stdout: Option<String>,
+    pub stderr: Option<String>,
+    pub exit_code: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -666,7 +669,7 @@ pub async fn run_deployment_script(
         }
     }
 
-    // Execute the deployment script (fire-and-forget)
+    // Execute the deployment script and wait for completion
     let shell = if cfg!(target_os = "windows") {
         "cmd"
     } else {
@@ -678,26 +681,40 @@ pub async fn run_deployment_script(
         "-c"
     };
 
-    let spawn_result = tokio::process::Command::new(shell)
+    tracing::info!(
+        "Running deployment script for project {} in {}",
+        project.id,
+        repo_path.display()
+    );
+
+    let output_result = tokio::process::Command::new(shell)
         .arg(shell_arg)
         .arg(&script)
         .current_dir(&repo_path)
-        .spawn();
+        .output()
+        .await;
 
-    match spawn_result {
-        Ok(_child) => {
+    match output_result {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            let exit_code = output.status.code();
+            let success = output.status.success();
+
             tracing::info!(
-                "Started deployment script for project {} in {}",
+                "Deployment script for project {} completed with exit code {:?}",
                 project.id,
-                repo_path.display()
+                exit_code
             );
 
             deployment
                 .track_if_analytics_allowed(
-                    "deployment_script_started",
+                    "deployment_script_completed",
                     serde_json::json!({
                         "project_id": project.id.to_string(),
                         "branch": payload.branch,
+                        "exit_code": exit_code,
+                        "success": success,
                     }),
                 )
                 .await;
@@ -705,14 +722,21 @@ pub async fn run_deployment_script(
             Ok(ResponseJson(ApiResponse::success(
                 RunDeploymentScriptResponse {
                     started: true,
-                    message: "Deployment script started".to_string(),
+                    message: if success {
+                        "Deployment script completed successfully".to_string()
+                    } else {
+                        format!("Deployment script failed with exit code {:?}", exit_code)
+                    },
+                    stdout: Some(stdout),
+                    stderr: Some(stderr),
+                    exit_code,
                 },
             )))
         }
         Err(e) => {
-            tracing::error!("Failed to start deployment script: {}", e);
+            tracing::error!("Failed to run deployment script: {}", e);
             Ok(ResponseJson(ApiResponse::error(&format!(
-                "Failed to start deployment script: {}",
+                "Failed to run deployment script: {}",
                 e
             ))))
         }
