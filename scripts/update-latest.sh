@@ -28,3 +28,13 @@ if [ "$1" == "--start" ]; then
   echo "Starting vibe-kanban"
   exec "./start-vk.sh"
 fi
+
+# Restart the service if the user passes the --restart-service flag
+if [ "$1" == "--restart-service" ]; then
+  if [ -f "/etc/systemd/system/vibe-kanban.service" ]; then
+    echo "Restarting vibe-kanban service"
+    sudo systemctl restart vibe-kanban.service
+  else
+    echo "Vibe Kanban service not found."
+  fi
+fi
