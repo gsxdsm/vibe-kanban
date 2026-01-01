@@ -13,6 +13,7 @@
     "dialog": {
       "title": "デプロイスクリプトを実行",
       "description": "{{name}}のデプロイスクリプトを実行します",
+      "scriptLabel": "デプロイスクリプト",
       "branchLabel": "ブランチ（オプション）",
       "branchPlaceholder": "先にチェックアウトするブランチを選択",
       "currentBranch": "現在のブランチを使用",

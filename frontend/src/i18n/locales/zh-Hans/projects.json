@@ -13,6 +13,7 @@
     "dialog": {
       "title": "运行部署脚本",
       "description": "为 {{name}} 运行部署脚本",
+      "scriptLabel": "部署脚本",
       "branchLabel": "分支（可选）",
       "branchPlaceholder": "选择要先检出的分支",
       "currentBranch": "使用当前分支",

@@ -111,7 +111,7 @@ const RunDeploymentScriptDialogImpl =
 
     return (
       <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Rocket className="h-5 w-5" />
@@ -123,6 +123,15 @@ const RunDeploymentScriptDialogImpl =
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {t('deployment.dialog.scriptLabel')}
+              </label>
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-[200px] overflow-y-auto font-mono whitespace-pre-wrap break-words">
+                {project.deployment_script || t('deployment.errors.noScriptConfigured')}
+              </pre>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {t('deployment.dialog.branchLabel')}

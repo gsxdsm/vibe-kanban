@@ -13,6 +13,7 @@
     "dialog": {
       "title": "배포 스크립트 실행",
       "description": "{{name}}의 배포 스크립트를 실행합니다",
+      "scriptLabel": "배포 스크립트",
       "branchLabel": "브랜치 (선택사항)",
       "branchPlaceholder": "먼저 체크아웃할 브랜치 선택",
       "currentBranch": "현재 브랜치 사용",
