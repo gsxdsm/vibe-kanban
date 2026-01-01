@@ -69,6 +69,38 @@ pub struct AbortConflictsRequest {
     pub repo_id: Uuid,
 }
 
+#[derive(Debug, Deserialize, Serialize, TS)]
+pub struct CherryPickToNewBranchRequest {
+    pub repo_id: Uuid,
+    /// The name for the new branch to create
+    pub new_branch_name: String,
+    /// The branch to base the new branch on (can be local or remote)
+    pub base_branch: String,
+}
+
+#[derive(Debug, Serialize, TS)]
+pub struct CherryPickToNewBranchResponse {
+    /// The new branch name
+    pub branch: String,
+    /// The final commit SHA after cherry-picking
+    pub head_sha: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[ts(tag = "type", rename_all = "snake_case")]
+pub enum CherryPickToNewBranchError {
+    EmptyBranchName,
+    InvalidBranchNameFormat,
+    BranchAlreadyExists { branch_name: String },
+    BaseBranchNotFound { branch_name: String },
+    NoCommitsToCherryPick,
+    RebaseInProgress { repo_name: String },
+    CherryPickInProgress { repo_name: String },
+    WorktreeDirty { repo_name: String },
+    CherryPickConflicts { message: String },
+}
+
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(tag = "type", rename_all = "snake_case")]
@@ -1179,6 +1211,156 @@ pub async fn abort_conflicts_task_attempt(
 }
 
 #[axum::debug_handler]
+pub async fn cherry_pick_to_new_branch(
+    Extension(workspace): Extension<Workspace>,
+    State(deployment): State<DeploymentImpl>,
+    Json(payload): Json<CherryPickToNewBranchRequest>,
+) -> Result<
+    ResponseJson<ApiResponse<CherryPickToNewBranchResponse, CherryPickToNewBranchError>>,
+    ApiError,
+> {
+    let pool = &deployment.db().pool;
+    let new_branch_name = payload.new_branch_name.trim();
+
+    // Validate branch name
+    if new_branch_name.is_empty() {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            CherryPickToNewBranchError::EmptyBranchName,
+        )));
+    }
+    if !deployment.git().is_branch_name_valid(new_branch_name) {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            CherryPickToNewBranchError::InvalidBranchNameFormat,
+        )));
+    }
+
+    let workspace_repo =
+        WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace.id, payload.repo_id)
+            .await?
+            .ok_or(RepoError::NotFound)?;
+
+    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+        .await?
+        .ok_or(RepoError::NotFound)?;
+
+    // Check if the branch already exists
+    if deployment
+        .git()
+        .check_branch_exists(&repo.path, new_branch_name)?
+    {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            CherryPickToNewBranchError::BranchAlreadyExists {
+                branch_name: new_branch_name.to_string(),
+            },
+        )));
+    }
+
+    // Check if the base branch exists
+    if !deployment
+        .git()
+        .check_branch_exists(&repo.path, &payload.base_branch)?
+    {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            CherryPickToNewBranchError::BaseBranchNotFound {
+                branch_name: payload.base_branch.clone(),
+            },
+        )));
+    }
+
+    let container_ref = deployment
+        .container()
+        .ensure_container_exists(&workspace)
+        .await?;
+    let workspace_path = Path::new(&container_ref);
+    let worktree_path = workspace_path.join(&repo.name);
+
+    // Check for in-progress operations
+    if deployment.git().is_rebase_in_progress(&worktree_path)? {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            CherryPickToNewBranchError::RebaseInProgress {
+                repo_name: repo.name.clone(),
+            },
+        )));
+    }
+
+    // Perform the cherry-pick to new branch operation
+    let result = deployment.git().cherry_pick_to_new_branch(
+        &repo.path,
+        &worktree_path,
+        &workspace.branch,
+        &workspace_repo.target_branch,
+        new_branch_name,
+        &payload.base_branch,
+    );
+
+    match result {
+        Ok(head_sha) => {
+            // Update workspace to use the new branch
+            Workspace::update_branch_name(pool, workspace.id, new_branch_name).await?;
+
+            // Update the target branch for this workspace repo to match the new base
+            WorkspaceRepo::update_target_branch(
+                pool,
+                workspace.id,
+                payload.repo_id,
+                &payload.base_branch,
+            )
+            .await?;
+
+            deployment
+                .track_if_analytics_allowed(
+                    "task_attempt_cherry_picked_to_new_branch",
+                    serde_json::json!({
+                        "workspace_id": workspace.id.to_string(),
+                        "repo_id": payload.repo_id.to_string(),
+                        "new_branch_name": new_branch_name,
+                        "base_branch": payload.base_branch,
+                    }),
+                )
+                .await;
+
+            Ok(ResponseJson(ApiResponse::success(
+                CherryPickToNewBranchResponse {
+                    branch: new_branch_name.to_string(),
+                    head_sha,
+                },
+            )))
+        }
+        Err(e) => {
+            use services::services::git::GitServiceError;
+            match e {
+                GitServiceError::MergeConflicts(msg) => Ok(ResponseJson(ApiResponse::error_with_data(
+                    CherryPickToNewBranchError::CherryPickConflicts { message: msg },
+                ))),
+                GitServiceError::RebaseInProgress => Ok(ResponseJson(ApiResponse::error_with_data(
+                    CherryPickToNewBranchError::RebaseInProgress {
+                        repo_name: repo.name.clone(),
+                    },
+                ))),
+                GitServiceError::WorktreeDirty(_, _) => Ok(ResponseJson(ApiResponse::error_with_data(
+                    CherryPickToNewBranchError::WorktreeDirty {
+                        repo_name: repo.name.clone(),
+                    },
+                ))),
+                GitServiceError::InvalidRepository(msg) if msg.contains("No commits to cherry-pick") => {
+                    Ok(ResponseJson(ApiResponse::error_with_data(
+                        CherryPickToNewBranchError::NoCommitsToCherryPick,
+                    )))
+                }
+                GitServiceError::InvalidRepository(msg) if msg.contains("Cherry-pick is already in progress") => {
+                    Ok(ResponseJson(ApiResponse::error_with_data(
+                        CherryPickToNewBranchError::CherryPickInProgress {
+                            repo_name: repo.name.clone(),
+                        },
+                    )))
+                }
+                other => Err(ApiError::GitService(other)),
+            }
+        }
+    }
+}
+
+#[axum::debug_handler]
 pub async fn start_dev_server(
     Extension(workspace): Extension<Workspace>,
     State(deployment): State<DeploymentImpl>,
@@ -1711,6 +1893,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/stop", post(stop_task_attempt_execution))
         .route("/change-target-branch", post(change_target_branch))
         .route("/rename-branch", post(rename_branch))
+        .route("/cherry-pick-to-new-branch", post(cherry_pick_to_new_branch))
         .route("/repos", get(get_task_attempt_repos))
         .route("/", put(update_workspace))
         .layer(from_fn_with_state(

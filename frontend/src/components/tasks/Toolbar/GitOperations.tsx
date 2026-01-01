@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle,
   ExternalLink,
+  Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -26,6 +27,7 @@ import { ChangeTargetBranchDialog } from '@/components/dialogs/tasks/ChangeTarge
 import RepoSelector from '@/components/tasks/RepoSelector';
 import { RebaseDialog } from '@/components/dialogs/tasks/RebaseDialog';
 import { CreatePRDialog } from '@/components/dialogs/tasks/CreatePRDialog';
+import { CherryPickToNewBranchDialog } from '@/components/dialogs/tasks/CherryPickToNewBranchDialog';
 import { useTranslation } from 'react-i18next';
 import { useAttemptRepo } from '@/hooks/useAttemptRepo';
 import { useGitOperations } from '@/hooks/useGitOperations';
@@ -256,6 +258,23 @@ function GitOperations({
       repoId: getSelectedRepoId(),
       targetBranch: getSelectedRepoStatus()?.target_branch_name,
     });
+  };
+
+  const handleCherryPickToNewBranchDialogOpen = async () => {
+    const repoId = getSelectedRepoId();
+    if (!repoId) return;
+
+    try {
+      await CherryPickToNewBranchDialog.show({
+        attemptId: selectedAttempt.id,
+        repoId,
+        branches,
+        currentBranchName: selectedAttempt.branch,
+        targetBranchName: getSelectedRepoStatus()?.target_branch_name || '',
+      });
+    } catch (error) {
+      // User cancelled - do nothing
+    }
   };
 
   const isVertical = layout === 'vertical';
@@ -521,6 +540,25 @@ function GitOperations({
                 className={`h-3.5 w-3.5 ${rebasing ? 'animate-spin' : ''}`}
               />
               <span className="truncate max-w-[10ch]">{rebaseButtonLabel}</span>
+            </Button>
+
+            <Button
+              onClick={handleCherryPickToNewBranchDialogOpen}
+              disabled={
+                isAttemptRunning ||
+                hasConflictsCalculated ||
+                selectedRepoStatus?.is_rebase_in_progress ||
+                (selectedRepoStatus?.commits_ahead ?? 0) === 0
+              }
+              variant="outline"
+              size="xs"
+              className="gap-1 shrink-0"
+              aria-label={t('cherryPickToNewBranch.action')}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              <span className="truncate max-w-[14ch]">
+                {t('cherryPickToNewBranch.action')}
+              </span>
             </Button>
           </div>
         )}

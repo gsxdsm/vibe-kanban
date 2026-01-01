@@ -89,6 +89,9 @@ import {
   PushTaskAttemptRequest,
   RepoBranchStatus,
   AbortConflictsRequest,
+  CherryPickToNewBranchRequest,
+  CherryPickToNewBranchResponse,
+  CherryPickToNewBranchError,
   Session,
   Workspace,
 } from 'shared/types';
@@ -803,6 +806,23 @@ export const attemptsApi = {
       `/api/task-attempts/${attemptId}/pr/comments?repo_id=${encodeURIComponent(repoId)}`
     );
     return handleApiResponse<PrCommentsResponse>(response);
+  },
+
+  cherryPickToNewBranch: async (
+    attemptId: string,
+    data: CherryPickToNewBranchRequest
+  ): Promise<Result<CherryPickToNewBranchResponse, CherryPickToNewBranchError>> => {
+    const response = await makeRequest(
+      `/api/task-attempts/${attemptId}/cherry-pick-to-new-branch`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return handleApiResponseAsResult<
+      CherryPickToNewBranchResponse,
+      CherryPickToNewBranchError
+    >(response);
   },
 };
 
