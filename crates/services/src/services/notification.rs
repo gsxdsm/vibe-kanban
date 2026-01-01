@@ -166,35 +166,36 @@ impl NotificationService {
             vars.insert("{{tool_name}}", String::new());
         }
 
-        // Shell-escape a value to prevent injection attacks
+        // Shell-escape special characters to prevent injection attacks
+        // Does not add wrapping quotes - users control quoting in their script template
         fn escape_for_shell(value: &str) -> String {
             if cfg!(target_os = "windows") {
-                // For cmd.exe, wrap in double quotes and escape existing double quotes
-                let mut escaped = String::from("\"");
+                // For cmd.exe, escape special characters: & | < > ^ " %
+                let mut escaped = String::with_capacity(value.len());
                 for ch in value.chars() {
-                    if ch == '"' {
-                        escaped.push('"');
-                    }
-                    escaped.push(ch);
-                }
-                escaped.push('"');
-                escaped
-            } else {
-                // For POSIX sh, use single quotes and escape existing single quotes
-                if value.is_empty() {
-                    "''".to_string()
-                } else {
-                    let mut escaped = String::from("'");
-                    for ch in value.chars() {
-                        if ch == '\'' {
-                            escaped.push_str("'\"'\"'");
-                        } else {
+                    match ch {
+                        '&' | '|' | '<' | '>' | '^' | '"' | '%' => {
+                            escaped.push('^');
                             escaped.push(ch);
                         }
+                        _ => escaped.push(ch),
                     }
-                    escaped.push('\'');
-                    escaped
                 }
+                escaped
+            } else {
+                // For POSIX sh, escape special characters with backslash
+                let mut escaped = String::with_capacity(value.len());
+                for ch in value.chars() {
+                    match ch {
+                        '\'' | '"' | '\\' | '$' | '`' | '!' | '*' | '?' | '[' | ']' | '#'
+                        | '~' | '&' | '|' | ';' | '(' | ')' | '<' | '>' | ' ' | '\t' | '\n' => {
+                            escaped.push('\\');
+                            escaped.push(ch);
+                        }
+                        _ => escaped.push(ch),
+                    }
+                }
+                escaped
             }
         }
 
