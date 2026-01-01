@@ -428,6 +428,10 @@ pub struct MergeTaskAttemptRequest {
 #[derive(Debug, Deserialize, Serialize, TS)]
 pub struct PushTaskAttemptRequest {
     pub repo_id: Uuid,
+    /// Optional branch to push. If not specified, pushes the workspace branch.
+    /// Used to push the target branch after a direct merge.
+    #[serde(default)]
+    pub target_branch: Option<String>,
 }
 
 #[axum::debug_handler]
@@ -565,16 +569,24 @@ pub async fn push_task_attempt_branch(
         .await?
         .ok_or(RepoError::NotFound)?;
 
-    let container_ref = deployment
-        .container()
-        .ensure_container_exists(&workspace)
-        .await?;
-    let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    // Determine which branch to push and which path to use
+    let (push_path, branch_to_push) = if let Some(ref target_branch) = request.target_branch {
+        // Push the target branch from the base repo path (after a direct merge)
+        (repo.path.clone(), target_branch.clone())
+    } else {
+        // Push the workspace branch from the worktree
+        let container_ref = deployment
+            .container()
+            .ensure_container_exists(&workspace)
+            .await?;
+        let workspace_path = Path::new(&container_ref);
+        let worktree_path = workspace_path.join(&repo.name);
+        (worktree_path, workspace.branch.clone())
+    };
 
     match deployment
         .git()
-        .push_to_github(&worktree_path, &workspace.branch, false)
+        .push_to_github(&push_path, &branch_to_push, false)
     {
         Ok(_) => Ok(ResponseJson(ApiResponse::success(()))),
         Err(GitServiceError::GitCLI(GitCliError::PushRejected(_))) => Ok(ResponseJson(
@@ -603,16 +615,24 @@ pub async fn force_push_task_attempt_branch(
         .await?
         .ok_or(RepoError::NotFound)?;
 
-    let container_ref = deployment
-        .container()
-        .ensure_container_exists(&workspace)
-        .await?;
-    let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    // Determine which branch to push and which path to use
+    let (push_path, branch_to_push) = if let Some(ref target_branch) = request.target_branch {
+        // Push the target branch from the base repo path (after a direct merge)
+        (repo.path.clone(), target_branch.clone())
+    } else {
+        // Push the workspace branch from the worktree
+        let container_ref = deployment
+            .container()
+            .ensure_container_exists(&workspace)
+            .await?;
+        let workspace_path = Path::new(&container_ref);
+        let worktree_path = workspace_path.join(&repo.name);
+        (worktree_path, workspace.branch.clone())
+    };
 
     deployment
         .git()
-        .push_to_github(&worktree_path, &workspace.branch, true)?;
+        .push_to_github(&push_path, &branch_to_push, true)?;
     Ok(ResponseJson(ApiResponse::success(())))
 }
 

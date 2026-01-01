@@ -19,11 +19,12 @@ export interface ForcePushDialogProps {
   attemptId: string;
   repoId: string;
   branchName?: string;
+  targetBranch?: string;
 }
 
 const ForcePushDialogImpl = NiceModal.create<ForcePushDialogProps>((props) => {
   const modal = useModal();
-  const { attemptId, repoId, branchName } = props;
+  const { attemptId, repoId, branchName, targetBranch } = props;
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation(['tasks', 'common']);
   const branchLabel = branchName ? ` "${branchName}"` : '';
@@ -48,7 +49,10 @@ const ForcePushDialogImpl = NiceModal.create<ForcePushDialogProps>((props) => {
   const handleConfirm = async () => {
     setError(null);
     try {
-      await forcePush.mutateAsync({ repo_id: repoId });
+      await forcePush.mutateAsync({
+        repo_id: repoId,
+        target_branch: targetBranch ?? null,
+      });
     } catch {
       // Error already handled by onError callback
     }
