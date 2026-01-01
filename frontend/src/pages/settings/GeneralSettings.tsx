@@ -631,6 +631,88 @@ export function GeneralSettings() {
               </p>
             </div>
           </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="script-enabled"
+              checked={draft?.notifications.script_enabled}
+              onCheckedChange={(checked: boolean) =>
+                updateDraft({
+                  notifications: {
+                    ...draft!.notifications,
+                    script_enabled: checked,
+                  },
+                })
+              }
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="script-enabled" className="cursor-pointer">
+                {t('settings.general.notifications.script.label')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.general.notifications.script.helper')}
+              </p>
+            </div>
+          </div>
+          {draft?.notifications.script_enabled && (
+            <div className="ml-6 space-y-2">
+              <Label htmlFor="script-command">
+                {t('settings.general.notifications.script.commandLabel')}
+              </Label>
+              <Input
+                id="script-command"
+                value={draft.notifications.script_command ?? ''}
+                placeholder={t(
+                  'settings.general.notifications.script.commandPlaceholder'
+                )}
+                onChange={(e) =>
+                  updateDraft({
+                    notifications: {
+                      ...draft.notifications,
+                      script_command: e.target.value || null,
+                    },
+                  })
+                }
+              />
+              <p className="text-sm text-muted-foreground">
+                {t('settings.general.notifications.script.commandHelper')}
+              </p>
+              <div className="text-xs text-muted-foreground bg-muted p-2 rounded-md font-mono">
+                <p className="font-semibold mb-1">
+                  {t('settings.general.notifications.script.variables')}
+                </p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>
+                    {'{{title}}'} -{' '}
+                    {t('settings.general.notifications.script.varTitle')}
+                  </li>
+                  <li>
+                    {'{{message}}'} -{' '}
+                    {t('settings.general.notifications.script.varMessage')}
+                  </li>
+                  <li>
+                    {'{{event}}'} -{' '}
+                    {t('settings.general.notifications.script.varEvent')}
+                  </li>
+                  <li>
+                    {'{{task_title}}'} -{' '}
+                    {t('settings.general.notifications.script.varTaskTitle')}
+                  </li>
+                  <li>
+                    {'{{task_branch}}'} -{' '}
+                    {t('settings.general.notifications.script.varTaskBranch')}
+                  </li>
+                  <li>
+                    {'{{executor}}'} -{' '}
+                    {t('settings.general.notifications.script.varExecutor')}
+                  </li>
+                  <li>
+                    {'{{tool_name}}'} -{' '}
+                    {t('settings.general.notifications.script.varToolName')}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
