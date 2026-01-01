@@ -23,6 +23,11 @@ After=network.target
 [Service]
 Environment="PORT=4000"
 Environment="HOST=0.0.0.0"
+Environment="PNPM_HOME=$HOME/.local/share/pnpm"
+Environment="CARGO_TARGET_DIR=$HOME/.cargo/shared-target" 
+Environment="RUSTC_WRAPPER=sccache"
+Environment="PATH=$PATH:$HOME/.local/share/pnpm/bin:$HOME/.cargo/bin"
+Environment="NVM_DIR=$HOME/.nvm"
 User=$USER
 Group=$USER
 WorkingDirectory=$INSTALL_DIR
