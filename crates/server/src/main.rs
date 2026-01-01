@@ -116,16 +116,24 @@ async fn main() -> Result<(), VibeKanbanError> {
     tracing::info!("Server running on http://{host}:{actual_port}");
 
     if !cfg!(debug_assertions) {
-        tracing::info!("Opening browser...");
-        tokio::spawn(async move {
-            if let Err(e) = open_browser(&format!("http://127.0.0.1:{actual_port}")).await {
-                tracing::warn!(
-                    "Failed to open browser automatically: {}. Please open http://127.0.0.1:{} manually.",
-                    e,
-                    actual_port
-                );
-            }
-        });
+        // Check if auto-open is enabled via environment variable
+        let auto_open_app = std::env::var("VK_AUTO_OPEN_APP")
+            .unwrap_or_else(|_| "true".to_string())
+            .to_lowercase()
+            != "false";
+
+        if auto_open_app {
+            tracing::info!("Opening browser...");
+            tokio::spawn(async move {
+                if let Err(e) = open_browser(&format!("http://127.0.0.1:{actual_port}")).await {
+                    tracing::warn!(
+                        "Failed to open browser automatically: {}. Please open http://127.0.0.1:{} manually.",
+                        e,
+                        actual_port
+                    );
+                }
+            });
+        }
     }
 
     axum::serve(listener, app_router)
