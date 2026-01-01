@@ -18,6 +18,7 @@ import {
   FolderOpen,
   Link2,
   MoreHorizontal,
+  Rocket,
   Trash2,
   Unlink,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ import { useOpenProjectInEditor } from '@/hooks/useOpenProjectInEditor';
 import { useNavigateWithSearch, useProjectRepos } from '@/hooks';
 import { projectsApi } from '@/lib/api';
 import { LinkProjectDialog } from '@/components/dialogs/projects/LinkProjectDialog';
+import { RunDeploymentScriptDialog } from '@/components/dialogs/projects/RunDeploymentScriptDialog';
 import { useTranslation } from 'react-i18next';
 import { useProjectMutations } from '@/hooks/useProjectMutations';
 
@@ -104,6 +106,17 @@ function ProjectCard({ project, isFocused, setError, onEdit }: Props) {
     }
   };
 
+  const handleRunDeployment = async () => {
+    try {
+      await RunDeploymentScriptDialog.show({ project });
+    } catch (error) {
+      console.error('Failed to run deployment script:', error);
+    }
+  };
+
+  const hasDeploymentScript =
+    project.deployment_script && project.deployment_script.trim() !== '';
+
   return (
     <Card
       className={`hover:shadow-md transition-shadow cursor-pointer focus:ring-2 focus:ring-primary outline-none border`}
@@ -140,6 +153,17 @@ function ProjectCard({ project, isFocused, setError, onEdit }: Props) {
                   >
                     <FolderOpen className="mr-2 h-4 w-4" />
                     {t('openInIDE')}
+                  </DropdownMenuItem>
+                )}
+                {hasDeploymentScript && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRunDeployment();
+                    }}
+                  >
+                    <Rocket className="mr-2 h-4 w-4" />
+                    {t('runDeployment')}
                   </DropdownMenuItem>
                 )}
                 {project.remote_project_id ? (

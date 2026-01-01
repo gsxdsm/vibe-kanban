@@ -1,0 +1,204 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Project, Repo } from 'shared/types';
+import { useRepoBranches } from '@/hooks/useRepoBranches';
+import { projectsApi } from '@/lib/api';
+import { Loader2, Rocket, AlertCircle, CheckCircle2 } from 'lucide-react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import { defineModal } from '@/lib/modals';
+import { useQuery } from '@tanstack/react-query';
+
+export interface RunDeploymentScriptDialogProps {
+  project: Project;
+}
+
+interface RunDeploymentScriptDialogResult {
+  started: boolean;
+}
+
+const RunDeploymentScriptDialogImpl =
+  NiceModal.create<RunDeploymentScriptDialogProps>(({ project }) => {
+    const modal = useModal();
+    const { t } = useTranslation('projects');
+    const [selectedBranch, setSelectedBranch] = useState<string>('');
+    const [isRunning, setIsRunning] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    // Fetch repositories for this project
+    const { data: repositories } = useQuery<Repo[]>({
+      queryKey: ['projectRepositories', project.id],
+      queryFn: () => projectsApi.getRepositories(project.id),
+    });
+
+    // Get the first repository's ID for branch listing
+    const firstRepoId = repositories?.[0]?.id;
+    const { data: branches, isLoading: branchesLoading } = useRepoBranches(
+      firstRepoId,
+      { enabled: !!firstRepoId }
+    );
+
+    const handleRun = async () => {
+      setIsRunning(true);
+      setError(null);
+
+      try {
+        const result = await projectsApi.runDeploymentScript(project.id, {
+          branch: selectedBranch || null,
+        });
+
+        if ('type' in result) {
+          // It's an error
+          switch (result.type) {
+            case 'no_script_configured':
+              setError(t('deployment.errors.noScriptConfigured'));
+              break;
+            case 'no_repositories':
+              setError(t('deployment.errors.noRepositories'));
+              break;
+            case 'git_checkout_failed':
+              setError(
+                t('deployment.errors.gitCheckoutFailed', {
+                  message: result.message,
+                })
+              );
+              break;
+          }
+        } else {
+          // Success
+          setSuccess(true);
+          setTimeout(() => {
+            modal.resolve({ started: true });
+            modal.hide();
+          }, 1500);
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : t('deployment.errors.unknown')
+        );
+      } finally {
+        setIsRunning(false);
+      }
+    };
+
+    const handleCancel = () => {
+      modal.resolve({ started: false });
+      modal.hide();
+    };
+
+    const handleOpenChange = (open: boolean) => {
+      if (!open && !isRunning) {
+        handleCancel();
+      }
+    };
+
+    return (
+      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5" />
+              {t('deployment.dialog.title')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('deployment.dialog.description', { name: project.name })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {t('deployment.dialog.branchLabel')}
+              </label>
+              <Select
+                value={selectedBranch}
+                onValueChange={setSelectedBranch}
+                disabled={branchesLoading || isRunning}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t('deployment.dialog.branchPlaceholder')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">
+                    {t('deployment.dialog.currentBranch')}
+                  </SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.name} value={branch.name}>
+                      {branch.name}
+                      {branch.is_current && ' (current)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {t('deployment.dialog.branchHelper')}
+              </p>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-600">
+                  {t('deployment.dialog.success')}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isRunning}
+            >
+              {t('deployment.dialog.cancel')}
+            </Button>
+            <Button onClick={handleRun} disabled={isRunning || success}>
+              {isRunning ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('deployment.dialog.running')}
+                </>
+              ) : (
+                <>
+                  <Rocket className="mr-2 h-4 w-4" />
+                  {t('deployment.dialog.run')}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  });
+
+export const RunDeploymentScriptDialog = defineModal<
+  RunDeploymentScriptDialogProps,
+  RunDeploymentScriptDialogResult
+>(RunDeploymentScriptDialogImpl);

@@ -2,6 +2,7 @@ interface ScriptPlaceholders {
   setup: string;
   dev: string;
   cleanup: string;
+  deployment: string;
 }
 
 interface ScriptPlaceholderStrategy {
@@ -20,6 +21,9 @@ REM Add dev server start command here...`,
       cleanup: `@echo off
 REM Add cleanup commands here...
 REM This runs after coding agent execution - only if changes were made`,
+      deployment: `@echo off
+REM Add deployment commands here...
+REM Example: npm run build && npm run deploy`,
     };
   }
 }
@@ -36,6 +40,9 @@ npm run dev
       cleanup: `#!/bin/bash
 # Add cleanup commands here...
 # This runs after coding agent execution - only if changes were made`,
+      deployment: `#!/bin/bash
+# Add deployment commands here...
+# Example: npm run build && npm run deploy`,
     };
   }
 }

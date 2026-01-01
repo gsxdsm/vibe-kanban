@@ -38,6 +38,7 @@ interface ProjectFormState {
   dev_script: string;
   dev_script_working_dir: string;
   default_agent_working_dir: string;
+  deployment_script: string;
   prefer_remote_branch: boolean;
 }
 
@@ -54,6 +55,7 @@ function projectToFormState(project: Project): ProjectFormState {
     dev_script: project.dev_script ?? '',
     dev_script_working_dir: project.dev_script_working_dir ?? '',
     default_agent_working_dir: project.default_agent_working_dir ?? '',
+    deployment_script: project.deployment_script ?? '',
     prefer_remote_branch: project.prefer_remote_branch,
   };
 }
@@ -399,6 +401,7 @@ export function ProjectSettings() {
         dev_script_working_dir: draft.dev_script_working_dir.trim() || null,
         default_agent_working_dir:
           draft.default_agent_working_dir.trim() || null,
+        deployment_script: draft.deployment_script.trim() || null,
         prefer_remote_branch: draft.prefer_remote_branch,
       };
 
@@ -630,6 +633,25 @@ export function ProjectSettings() {
                 />
                 <p className="text-sm text-muted-foreground">
                   {t('settings.projects.scripts.agentWorkingDir.helper')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deployment-script">
+                  {t('settings.projects.scripts.deployment.label')}
+                </Label>
+                <AutoExpandingTextarea
+                  id="deployment-script"
+                  value={draft.deployment_script}
+                  onChange={(e) =>
+                    updateDraft({ deployment_script: e.target.value })
+                  }
+                  placeholder={placeholders.deployment}
+                  maxRows={12}
+                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.projects.scripts.deployment.helper')}
                 </p>
               </div>
 
