@@ -19,6 +19,7 @@ import {
   Plus,
   LogOut,
   LogIn,
+  Rocket,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchBar } from '@/components/SearchBar';
@@ -38,6 +39,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { OAuthDialog } from '@/components/dialogs/global/OAuthDialog';
+import { RunDeploymentScriptDialog } from '@/components/dialogs/projects/RunDeploymentScriptDialog';
 import { useUserSystem } from '@/components/ConfigProvider';
 import { oauthApi } from '@/lib/api';
 
@@ -89,7 +91,7 @@ export function Navbar() {
     },
     [registerInputRef]
   );
-  const { t } = useTranslation(['tasks', 'common']);
+  const { t } = useTranslation(['tasks', 'common', 'projects']);
   // Navbar is global, but the share tasks toggle only makes sense on the tasks route
   const isTasksRoute = /^\/projects\/[^/]+\/tasks/.test(location.pathname);
   const showSharedTasks = searchParams.get('shared') !== 'off';
@@ -118,6 +120,19 @@ export function Navbar() {
   const handleOpenInIDE = () => {
     handleOpenInEditor();
   };
+
+  const handleRunDeployment = async () => {
+    if (project) {
+      try {
+        await RunDeploymentScriptDialog.show({ project });
+      } catch (error) {
+        console.error('Failed to run deployment script:', error);
+      }
+    }
+  };
+
+  const hasDeploymentScript =
+    project?.deployment_script && project.deployment_script.trim() !== '';
 
   const handleOpenOAuth = async () => {
     const profile = await OAuthDialog.show();
@@ -218,6 +233,18 @@ export function Navbar() {
                       onClick={handleOpenInIDE}
                       className="h-9 w-9"
                     />
+                  )}
+                  {hasDeploymentScript && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={handleRunDeployment}
+                      aria-label={t('projects:runDeployment')}
+                      title={t('projects:runDeployment')}
+                    >
+                      <Rocket className="h-4 w-4" />
+                    </Button>
                   )}
                   <Button
                     variant="ghost"
