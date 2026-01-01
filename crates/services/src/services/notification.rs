@@ -1,9 +1,38 @@
+use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 use tokio::sync::RwLock;
 use utils;
 
 use crate::services::config::{Config, NotificationConfig, SoundFile};
+
+/// Event types for script notifications
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NotificationEvent {
+    TaskCompleted,
+    TaskFailed,
+    ApprovalNeeded,
+}
+
+impl NotificationEvent {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            NotificationEvent::TaskCompleted => "task_completed",
+            NotificationEvent::TaskFailed => "task_failed",
+            NotificationEvent::ApprovalNeeded => "approval_needed",
+        }
+    }
+}
+
+/// Context variables for script notifications
+#[derive(Debug, Clone, Default)]
+pub struct NotificationContext {
+    pub event: Option<NotificationEvent>,
+    pub task_title: Option<String>,
+    pub task_branch: Option<String>,
+    pub executor: Option<String>,
+    pub tool_name: Option<String>,
+}
 
 /// Service for handling cross-platform notifications including sound alerts and push notifications
 #[derive(Debug, Clone)]
@@ -21,12 +50,23 @@ impl NotificationService {
 
     /// Send both sound and push notifications if enabled
     pub async fn notify(&self, title: &str, message: &str) {
+        self.notify_with_context(title, message, NotificationContext::default())
+            .await;
+    }
+
+    /// Send notifications with additional context for script variable substitution
+    pub async fn notify_with_context(&self, title: &str, message: &str, context: NotificationContext) {
         let config = self.config.read().await.notifications.clone();
-        Self::send_notification(&config, title, message).await;
+        Self::send_notification(&config, title, message, &context).await;
     }
 
     /// Internal method to send notifications with a given config
-    async fn send_notification(config: &NotificationConfig, title: &str, message: &str) {
+    async fn send_notification(
+        config: &NotificationConfig,
+        title: &str,
+        message: &str,
+        context: &NotificationContext,
+    ) {
         if config.sound_enabled {
             Self::play_sound_notification(&config.sound_file).await;
         }
@@ -34,6 +74,84 @@ impl NotificationService {
         if config.push_enabled {
             Self::send_push_notification(title, message).await;
         }
+
+        if config.script_enabled
+            && let Some(ref script_command) = config.script_command
+        {
+            Self::execute_script_notification(script_command, title, message, context).await;
+        }
+    }
+
+    /// Execute a user-configured script with variable substitution
+    async fn execute_script_notification(
+        script_command: &str,
+        title: &str,
+        message: &str,
+        context: &NotificationContext,
+    ) {
+        // Build variable substitutions
+        let mut vars: HashMap<&str, String> = HashMap::new();
+        vars.insert("{{title}}", title.to_string());
+        vars.insert("{{message}}", message.to_string());
+
+        if let Some(ref event) = context.event {
+            vars.insert("{{event}}", event.as_str().to_string());
+        } else {
+            vars.insert("{{event}}", String::new());
+        }
+
+        if let Some(ref task_title) = context.task_title {
+            vars.insert("{{task_title}}", task_title.clone());
+        } else {
+            vars.insert("{{task_title}}", String::new());
+        }
+
+        if let Some(ref task_branch) = context.task_branch {
+            vars.insert("{{task_branch}}", task_branch.clone());
+        } else {
+            vars.insert("{{task_branch}}", String::new());
+        }
+
+        if let Some(ref executor) = context.executor {
+            vars.insert("{{executor}}", executor.clone());
+        } else {
+            vars.insert("{{executor}}", String::new());
+        }
+
+        if let Some(ref tool_name) = context.tool_name {
+            vars.insert("{{tool_name}}", tool_name.clone());
+        } else {
+            vars.insert("{{tool_name}}", String::new());
+        }
+
+        // Perform variable substitution
+        let mut command = script_command.to_string();
+        for (var, value) in &vars {
+            command = command.replace(var, value);
+        }
+
+        tracing::debug!("Executing notification script: {}", command);
+
+        // Execute the script using the appropriate shell
+        let shell = if cfg!(target_os = "windows") {
+            "cmd"
+        } else {
+            "sh"
+        };
+        let shell_arg = if cfg!(target_os = "windows") {
+            "/C"
+        } else {
+            "-c"
+        };
+
+        // Fire-and-forget execution (don't await the result)
+        let _ = tokio::process::Command::new(shell)
+            .arg(shell_arg)
+            .arg(&command)
+            .spawn()
+            .map_err(|e| {
+                tracing::error!("Failed to execute notification script: {}", e);
+            });
     }
 
     /// Play a system sound notification across platforms
