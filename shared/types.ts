@@ -258,6 +258,28 @@ export type RebaseTaskAttemptRequest = { repo_id: string, old_base_branch: strin
 
 export type AbortConflictsRequest = { repo_id: string, };
 
+export type CherryPickToNewBranchRequest = { repo_id: string, 
+/**
+ * The name for the new branch to create
+ */
+new_branch_name: string, 
+/**
+ * The branch to base the new branch on (can be local or remote)
+ */
+base_branch: string, };
+
+export type CherryPickToNewBranchResponse = { 
+/**
+ * The new branch name
+ */
+branch: string, 
+/**
+ * The final commit SHA after cherry-picking
+ */
+head_sha: string, };
+
+export type CherryPickToNewBranchError = { "type": "empty_branch_name" } | { "type": "invalid_branch_name_format" } | { "type": "branch_already_exists", branch_name: string, } | { "type": "base_branch_not_found", branch_name: string, } | { "type": "no_commits_to_cherry_pick" } | { "type": "rebase_in_progress", repo_name: string, } | { "type": "cherry_pick_in_progress", repo_name: string, } | { "type": "worktree_dirty", repo_name: string, } | { "type": "cherry_pick_conflicts", message: string, };
+
 export type GitOperationError = { "type": "merge_conflicts", message: string, op: ConflictOp, } | { "type": "rebase_in_progress" };
 
 export type PushError = { "type": "force_push_required" };

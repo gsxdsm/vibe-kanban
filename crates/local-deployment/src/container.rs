@@ -524,10 +524,8 @@ impl LocalContainerService {
                                 container.finalize_task(publisher.as_ref().ok(), &ctx).await;
                             }
                         }
-                    } else {
-                        if !already_finalized {
-                            container.finalize_task(publisher.as_ref().ok(), &ctx).await;
-                        }
+                    } else if !already_finalized {
+                        container.finalize_task(publisher.as_ref().ok(), &ctx).await;
                     }
                 }
 

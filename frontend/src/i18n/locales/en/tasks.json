@@ -354,6 +354,27 @@
       "action": "Rename Branch"
     }
   },
+  "cherryPickToNewBranch": {
+    "action": "Copy to new branch",
+    "dialog": {
+      "title": "Copy Changes to New Branch",
+      "description": "Cherry-pick the changes from this task onto a new branch based on any existing branch.",
+      "newBranchNameLabel": "New Branch Name",
+      "newBranchNamePlaceholder": "e.g., feature/my-new-branch",
+      "baseBranchLabel": "Base Branch",
+      "baseBranchPlaceholder": "Select a base branch",
+      "baseBranchHelp": "The new branch will be created from this branch, and your changes will be applied on top.",
+      "inProgress": "Copying...",
+      "action": "Create & Apply Changes",
+      "error": "Failed to cherry-pick changes to new branch",
+      "errors": {
+        "emptyName": "Branch name cannot be empty",
+        "sameName": "New branch name must be different from current branch",
+        "hasSpaces": "Branch name cannot contain spaces",
+        "noBaseBranch": "Please select a base branch"
+      }
+    }
+  },
   "stopShareDialog": {
     "title": "Stop Sharing Task",
     "description": "Stop sharing \"{{title}}\" with your organization?",

@@ -653,6 +653,56 @@ impl GitCli {
         }
         Ok(files)
     }
+
+    /// Cherry-pick a range of commits onto the current branch.
+    /// The range is specified as `base_commit..head_commit` (exclusive of base, inclusive of head).
+    pub fn cherry_pick_range(
+        &self,
+        worktree_path: &Path,
+        base_commit: &str,
+        head_commit: &str,
+    ) -> Result<(), GitCliError> {
+        // Use git cherry-pick with a range: base_commit..head_commit
+        // This applies commits after base_commit up to and including head_commit
+        let range = format!("{base_commit}..{head_commit}");
+        self.git(worktree_path, ["cherry-pick", &range])?;
+        Ok(())
+    }
+
+    /// Create a new branch from a specific commit without checking it out.
+    pub fn create_branch_at(
+        &self,
+        repo_path: &Path,
+        branch_name: &str,
+        start_point: &str,
+    ) -> Result<(), GitCliError> {
+        self.git(repo_path, ["branch", branch_name, start_point])?;
+        Ok(())
+    }
+
+    /// Checkout a branch in the worktree.
+    pub fn checkout_branch(&self, worktree_path: &Path, branch_name: &str) -> Result<(), GitCliError> {
+        self.git(worktree_path, ["checkout", branch_name])?;
+        Ok(())
+    }
+
+    /// Get the list of commit SHAs between two refs (base exclusive, head inclusive).
+    pub fn rev_list_range(
+        &self,
+        repo_path: &Path,
+        base: &str,
+        head: &str,
+    ) -> Result<Vec<String>, GitCliError> {
+        let range = format!("{base}..{head}");
+        let out = self.git(repo_path, ["rev-list", "--reverse", &range])?;
+        Ok(out.lines().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect())
+    }
+
+    /// Get the current HEAD commit SHA.
+    pub fn get_head_sha(&self, worktree_path: &Path) -> Result<String, GitCliError> {
+        let out = self.git(worktree_path, ["rev-parse", "HEAD"])?;
+        Ok(out.trim().to_string())
+    }
 }
 
 // Private methods
