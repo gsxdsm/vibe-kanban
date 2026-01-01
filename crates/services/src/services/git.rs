@@ -38,6 +38,10 @@ pub enum GitServiceError {
     WorktreeDirty(String, String),
     #[error("Rebase in progress; resolve or abort it before retrying")]
     RebaseInProgress,
+    #[error("Cherry-pick is already in progress")]
+    CherryPickInProgress,
+    #[error("No commits to cherry-pick")]
+    NoCommitsToCherryPick,
 }
 /// Service for managing Git operations in task execution workflows
 #[derive(Clone)]
@@ -1879,22 +1883,7 @@ impl GitService {
             .is_cherry_pick_in_progress(worktree_path)
             .unwrap_or(false)
         {
-            return Err(GitServiceError::InvalidRepository(
-                "Cherry-pick is already in progress".into(),
-            ));
-        }
-
-        // Validate that the new branch name doesn't already exist
-        if self.check_branch_exists(repo_path, new_branch_name)? {
-            return Err(GitServiceError::InvalidRepository(format!(
-                "Branch '{}' already exists",
-                new_branch_name
-            )));
-        }
-
-        // Validate that the new base branch exists
-        if !self.check_branch_exists(repo_path, new_base_branch)? {
-            return Err(GitServiceError::BranchNotFound(new_base_branch.to_string()));
+            return Err(GitServiceError::CherryPickInProgress);
         }
 
         // Get the target base branch reference and fetch if remote
@@ -1928,9 +1917,7 @@ impl GitService {
             })?;
 
         if commits_to_pick.is_empty() {
-            return Err(GitServiceError::InvalidRepository(
-                "No commits to cherry-pick; the task branch has no changes from its base".into(),
-            ));
+            return Err(GitServiceError::NoCommitsToCherryPick);
         }
 
         // Create the new branch at the new base
