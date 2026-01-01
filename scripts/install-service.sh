@@ -4,14 +4,15 @@
 
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$HOME/vibe-kanban"
+INSTALL_DIR="$HOME/vibe-kanban"
 USER=$(whoami)
 
 # Create the project directory if it doesn't exist
-mkdir -p "$PROJECT_ROOT"
+mkdir -p "$INSTALL_DIR"
 
 # Copy the start-vk.sh script
-cp "$SCRIPT_DIR/start-vk.sh" "$PROJECT_ROOT/start-vk.sh"
+cp "$SCRIPT_DIR/start-vk.sh" "$INSTALL_DIR/start-vk.sh"
+chmod +x "$INSTALL_DIR/start-vk.sh"
 
 # Create the systemd service file
 cat << EOF > vibe-kanban.service
@@ -24,8 +25,8 @@ Environment="PORT=4000"
 Environment="HOST=0.0.0.0"
 User=$USER
 Group=$USER
-WorkingDirectory=$PROJECT_ROOT
-ExecStart=/bin/bash -c "$PROJECT_ROOT/start-vk.sh"
+WorkingDirectory=$INSTALL_DIR
+ExecStart=/bin/bash -c "$INSTALL_DIR/start-vk.sh"
 Restart=always
 RestartSec=10
 
