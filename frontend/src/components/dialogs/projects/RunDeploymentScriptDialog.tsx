@@ -17,10 +17,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Project, Repo } from 'shared/types';
+import { Project, Repo, RunDeploymentScriptResponse } from 'shared/types';
 import { useRepoBranches } from '@/hooks/useRepoBranches';
 import { projectsApi } from '@/lib/api';
-import { Loader2, Rocket, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Loader2,
+  Rocket,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+} from 'lucide-react';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useQuery } from '@tanstack/react-query';
@@ -43,6 +50,8 @@ const RunDeploymentScriptDialogImpl =
     const [isRunning, setIsRunning] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [output, setOutput] = useState<RunDeploymentScriptResponse | null>(null);
+    const [isOutputOpen, setIsOutputOpen] = useState(true);
 
     // Fetch repositories for this project
     const { data: repositories } = useQuery<Repo[]>({
@@ -84,12 +93,17 @@ const RunDeploymentScriptDialogImpl =
               break;
           }
         } else {
-          // Success
-          setSuccess(true);
-          setTimeout(() => {
-            modal.resolve({ started: true });
-            modal.hide();
-          }, 1500);
+          // Completed (success or failure based on exit code)
+          setOutput(result);
+          if (result.exit_code === 0) {
+            setSuccess(true);
+          } else {
+            setError(
+              t('deployment.errors.scriptFailed', {
+                exitCode: result.exit_code ?? 'unknown',
+              })
+            );
+          }
         }
       } catch (err) {
         setError(
@@ -180,29 +194,80 @@ const RunDeploymentScriptDialogImpl =
                 </AlertDescription>
               </Alert>
             )}
+
+            {output && (output.stdout || output.stderr) && (
+              <div className="space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between p-2 h-auto"
+                  onClick={() => setIsOutputOpen(!isOutputOpen)}
+                >
+                  <span className="text-sm font-medium">
+                    {t('deployment.dialog.outputLabel')}
+                  </span>
+                  {isOutputOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+                {isOutputOpen && (
+                  <div className="space-y-2">
+                    {output.stdout && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          stdout
+                        </label>
+                        <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-[150px] overflow-y-auto font-mono whitespace-pre-wrap break-words">
+                          {output.stdout}
+                        </pre>
+                      </div>
+                    )}
+                    {output.stderr && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          stderr
+                        </label>
+                        <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-[150px] overflow-y-auto font-mono whitespace-pre-wrap break-words text-red-600 dark:text-red-400">
+                          {output.stderr}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isRunning}
-            >
-              {t('deployment.dialog.cancel')}
-            </Button>
-            <Button onClick={handleRun} disabled={isRunning || success}>
-              {isRunning ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('deployment.dialog.running')}
-                </>
-              ) : (
-                <>
-                  <Rocket className="mr-2 h-4 w-4" />
-                  {t('deployment.dialog.run')}
-                </>
-              )}
-            </Button>
+            {output ? (
+              <Button onClick={handleCancel}>
+                {t('deployment.dialog.close')}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isRunning}
+                >
+                  {t('deployment.dialog.cancel')}
+                </Button>
+                <Button onClick={handleRun} disabled={isRunning}>
+                  {isRunning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('deployment.dialog.running')}
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="mr-2 h-4 w-4" />
+                      {t('deployment.dialog.run')}
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

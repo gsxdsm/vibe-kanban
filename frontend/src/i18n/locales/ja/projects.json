@@ -19,14 +19,17 @@
       "currentBranch": "現在のブランチを使用",
       "branchHelper": "デプロイスクリプト実行前に特定のブランチをチェックアウトできます",
       "cancel": "キャンセル",
+      "close": "閉じる",
       "run": "デプロイを実行",
       "running": "実行中...",
-      "success": "デプロイスクリプトが正常に開始されました！"
+      "success": "デプロイスクリプトが正常に完了しました！",
+      "outputLabel": "スクリプト出力"
     },
     "errors": {
       "noScriptConfigured": "このプロジェクトにはデプロイスクリプトが設定されていません。プロジェクト設定で設定してください。",
       "noRepositories": "このプロジェクトにはリポジトリが見つかりません。",
       "gitCheckoutFailed": "ブランチのチェックアウトに失敗しました: {{message}}",
+      "scriptFailed": "デプロイスクリプトが終了コード {{exitCode}} で失敗しました",
       "unknown": "不明なエラーが発生しました"
     }
   },

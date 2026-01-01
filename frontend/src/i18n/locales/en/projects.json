@@ -19,14 +19,17 @@
       "currentBranch": "Use current branch",
       "branchHelper": "Optionally checkout a specific branch before running the deployment script",
       "cancel": "Cancel",
+      "close": "Close",
       "run": "Run Deployment",
       "running": "Running...",
-      "success": "Deployment script started successfully!"
+      "success": "Deployment script completed successfully!",
+      "outputLabel": "Script Output"
     },
     "errors": {
       "noScriptConfigured": "No deployment script configured for this project. Configure one in project settings.",
       "noRepositories": "No repositories found for this project.",
       "gitCheckoutFailed": "Failed to checkout branch: {{message}}",
+      "scriptFailed": "Deployment script failed with exit code {{exitCode}}",
       "unknown": "An unknown error occurred"
     }
   },
