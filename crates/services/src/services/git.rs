@@ -1845,18 +1845,18 @@ impl GitService {
 
     /// Cherry-pick commits from the task branch onto a new branch based on the given base.
     ///
-    /// This creates a new branch starting from `base_branch`, then cherry-picks all commits
-    /// that are on `task_branch` but not on `original_base_branch` (i.e., the changes made
-    /// as part of the task attempt).
+    /// This creates a new branch starting from `new_base_branch`, then cherry-picks all commits
+    /// that were made as part of the task attempt (from `task_start_commit` to the current HEAD
+    /// of `task_branch`).
     ///
     /// IMPORTANT: This operation uses a temporary worktree to perform the cherry-pick,
     /// ensuring the user's current worktree is never modified.
     ///
     /// # Arguments
     /// * `repo_path` - Path to the bare repository
-    /// * `worktree_path` - Path to the worktree where the task branch is checked out (used for reading only)
+    /// * `worktree_path` - Path to the worktree where the task branch is checked out (used for temp worktree location only)
     /// * `task_branch` - The current task branch name
-    /// * `original_base_branch` - The branch the task was originally based on
+    /// * `task_start_commit` - The commit SHA where the task attempt started (before any task changes)
     /// * `new_branch_name` - The name for the new branch to create
     /// * `new_base_branch` - The branch to base the new branch on (can be local or remote)
     ///
@@ -1867,7 +1867,7 @@ impl GitService {
         repo_path: &Path,
         worktree_path: &Path,
         task_branch: &str,
-        original_base_branch: &str,
+        task_start_commit: &str,
         new_branch_name: &str,
         new_base_branch: &str,
     ) -> Result<String, GitServiceError> {
@@ -1880,19 +1880,6 @@ impl GitService {
             self.fetch_branch_from_remote(&main_repo, &nbr)?;
         }
 
-        // Get the merge base between the task branch and its original base
-        // This is where the task's work started
-        // We use repo_path here since we're working with refs, not the worktree
-        let merge_base = git
-            .git(
-                repo_path,
-                ["merge-base", original_base_branch, task_branch],
-            )
-            .map(|s| s.trim().to_string())
-            .map_err(|e| {
-                GitServiceError::InvalidRepository(format!("Failed to find merge base: {e}"))
-            })?;
-
         // Get the HEAD of the task branch
         let task_head = git
             .git(repo_path, ["rev-parse", task_branch])
@@ -1901,9 +1888,10 @@ impl GitService {
                 GitServiceError::InvalidRepository(format!("Failed to get task branch HEAD: {e}"))
             })?;
 
-        // Get the list of commits to cherry-pick
+        // Get the list of commits to cherry-pick (from task start to current HEAD)
+        // This only includes commits made as part of the task attempt
         let commits_to_pick = git
-            .rev_list_range(repo_path, &merge_base, &task_head)
+            .rev_list_range(repo_path, task_start_commit, &task_head)
             .map_err(|e| {
                 GitServiceError::InvalidRepository(format!("Failed to list commits: {e}"))
             })?;
