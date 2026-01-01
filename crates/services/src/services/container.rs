@@ -430,6 +430,7 @@ pub trait ContainerService {
                                 } else {
                                     project.default_agent_working_dir.clone()
                                 },
+                                deployment_script: project.deployment_script.clone(),
                                 prefer_remote_branch: None,
                             },
                         )

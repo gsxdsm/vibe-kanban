@@ -21,8 +21,10 @@ import {
   Clock,
   Edit,
   Loader2,
+  Rocket,
   Trash2,
 } from 'lucide-react';
+import { RunDeploymentScriptDialog } from '@/components/dialogs/projects/RunDeploymentScriptDialog';
 
 interface ProjectDetailProps {
   projectId: string;
@@ -60,6 +62,18 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
   const handleEditClick = () => {
     navigate(`/settings/projects?projectId=${projectId}`);
   };
+
+  const handleRunDeployment = async () => {
+    if (!project) return;
+    try {
+      await RunDeploymentScriptDialog.show({ project });
+    } catch (error) {
+      console.error('Failed to run deployment script:', error);
+    }
+  };
+
+  const hasDeploymentScript =
+    project?.deployment_script && project.deployment_script.trim() !== '';
 
   if (isLoading) {
     return (
@@ -118,6 +132,12 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
             <CheckSquare className="mr-2 h-4 w-4" />
             View Tasks
           </Button>
+          {hasDeploymentScript && (
+            <Button variant="outline" onClick={handleRunDeployment}>
+              <Rocket className="mr-2 h-4 w-4" />
+              {t('runDeployment')}
+            </Button>
+          )}
           <Button variant="outline" onClick={handleEditClick}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
