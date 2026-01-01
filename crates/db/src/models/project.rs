@@ -24,6 +24,7 @@ pub struct Project {
     pub dev_script: Option<String>,
     pub dev_script_working_dir: Option<String>,
     pub default_agent_working_dir: Option<String>,
+    pub deployment_script: Option<String>,
     pub remote_project_id: Option<Uuid>,
     pub prefer_remote_branch: bool,
     #[ts(type = "Date")]
@@ -44,6 +45,7 @@ pub struct UpdateProject {
     pub dev_script: Option<String>,
     pub dev_script_working_dir: Option<String>,
     pub default_agent_working_dir: Option<String>,
+    pub deployment_script: Option<String>,
     pub prefer_remote_branch: Option<bool>,
 }
 
@@ -76,6 +78,7 @@ impl Project {
                       dev_script,
                       dev_script_working_dir,
                       default_agent_working_dir,
+                      deployment_script,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
                       created_at as "created_at!: DateTime<Utc>",
@@ -94,6 +97,7 @@ impl Project {
             r#"
             SELECT p.id as "id!: Uuid", p.name, p.dev_script, p.dev_script_working_dir,
                    p.default_agent_working_dir,
+                   p.deployment_script,
                    p.remote_project_id as "remote_project_id: Uuid",
                    p.prefer_remote_branch,
                    p.created_at as "created_at!: DateTime<Utc>", p.updated_at as "updated_at!: DateTime<Utc>"
@@ -120,6 +124,7 @@ impl Project {
                       dev_script,
                       dev_script_working_dir,
                       default_agent_working_dir,
+                      deployment_script,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
                       created_at as "created_at!: DateTime<Utc>",
@@ -140,6 +145,7 @@ impl Project {
                       dev_script,
                       dev_script_working_dir,
                       default_agent_working_dir,
+                      deployment_script,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
                       created_at as "created_at!: DateTime<Utc>",
@@ -163,6 +169,7 @@ impl Project {
                       dev_script,
                       dev_script_working_dir,
                       default_agent_working_dir,
+                      deployment_script,
                       remote_project_id as "remote_project_id: Uuid",
                       prefer_remote_branch,
                       created_at as "created_at!: DateTime<Utc>",
@@ -195,6 +202,7 @@ impl Project {
                           dev_script,
                           dev_script_working_dir,
                           default_agent_working_dir,
+                          deployment_script,
                           remote_project_id as "remote_project_id: Uuid",
                           prefer_remote_branch,
                           created_at as "created_at!: DateTime<Utc>",
@@ -219,6 +227,7 @@ impl Project {
         let dev_script = payload.dev_script.clone();
         let dev_script_working_dir = payload.dev_script_working_dir.clone();
         let default_agent_working_dir = payload.default_agent_working_dir.clone();
+        let deployment_script = payload.deployment_script.clone();
         let prefer_remote_branch = payload
             .prefer_remote_branch
             .unwrap_or(existing.prefer_remote_branch);
@@ -226,13 +235,14 @@ impl Project {
         sqlx::query_as!(
             Project,
             r#"UPDATE projects
-               SET name = $2, dev_script = $3, dev_script_working_dir = $4, default_agent_working_dir = $5, prefer_remote_branch = $6
+               SET name = $2, dev_script = $3, dev_script_working_dir = $4, default_agent_working_dir = $5, deployment_script = $6, prefer_remote_branch = $7
                WHERE id = $1
                RETURNING id as "id!: Uuid",
                          name,
                          dev_script,
                          dev_script_working_dir,
                          default_agent_working_dir,
+                         deployment_script,
                          remote_project_id as "remote_project_id: Uuid",
                          prefer_remote_branch,
                          created_at as "created_at!: DateTime<Utc>",
@@ -242,6 +252,7 @@ impl Project {
             dev_script,
             dev_script_working_dir,
             default_agent_working_dir,
+            deployment_script,
             prefer_remote_branch,
         )
         .fetch_one(pool)

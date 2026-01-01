@@ -73,6 +73,9 @@ import {
   ListInvitationsResponse,
   OpenEditorResponse,
   OpenEditorRequest,
+  RunDeploymentScriptRequest,
+  RunDeploymentScriptResponse,
+  RunDeploymentScriptError,
   CreatePrError,
   Scratch,
   ScratchType,
@@ -384,6 +387,22 @@ export const projectsApi = {
       }
     );
     return handleApiResponse<ProjectRepo>(response);
+  },
+
+  runDeploymentScript: async (
+    projectId: string,
+    data: RunDeploymentScriptRequest
+  ): Promise<RunDeploymentScriptResponse | RunDeploymentScriptError> => {
+    const response = await makeRequest(
+      `/api/projects/${projectId}/run-deployment-script`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return handleApiResponse<
+      RunDeploymentScriptResponse | RunDeploymentScriptError
+    >(response);
   },
 };
 
