@@ -38,6 +38,10 @@ pub enum GitServiceError {
     WorktreeDirty(String, String),
     #[error("Rebase in progress; resolve or abort it before retrying")]
     RebaseInProgress,
+    #[error("Cherry-pick is already in progress")]
+    CherryPickInProgress,
+    #[error("No commits to cherry-pick")]
+    NoCommitsToCherryPick,
 }
 /// Service for managing Git operations in task execution workflows
 #[derive(Clone)]
@@ -1837,6 +1841,135 @@ impl GitService {
         );
 
         Ok(repo)
+    }
+
+    /// Cherry-pick commits from the task branch onto a new branch based on the given base.
+    ///
+    /// This creates a new branch starting from `base_branch`, then cherry-picks all commits
+    /// that are on `task_branch` but not on `original_base_branch` (i.e., the changes made
+    /// as part of the task attempt).
+    ///
+    /// # Arguments
+    /// * `repo_path` - Path to the bare repository
+    /// * `worktree_path` - Path to the worktree where the task branch is checked out
+    /// * `task_branch` - The current task branch name
+    /// * `original_base_branch` - The branch the task was originally based on
+    /// * `new_branch_name` - The name for the new branch to create
+    /// * `new_base_branch` - The branch to base the new branch on (can be local or remote)
+    ///
+    /// # Returns
+    /// The SHA of the new HEAD after cherry-picking, or an error if conflicts occur.
+    pub fn cherry_pick_to_new_branch(
+        &self,
+        repo_path: &Path,
+        worktree_path: &Path,
+        task_branch: &str,
+        original_base_branch: &str,
+        new_branch_name: &str,
+        new_base_branch: &str,
+    ) -> Result<String, GitServiceError> {
+        let worktree_repo = Repository::open(worktree_path)?;
+        let main_repo = self.open_repo(repo_path)?;
+        let git = GitCli::new();
+
+        // Safety: check worktree is clean
+        self.check_worktree_clean(&worktree_repo)?;
+
+        // Refuse if any git operation is in progress
+        if git.is_rebase_in_progress(worktree_path).unwrap_or(false) {
+            return Err(GitServiceError::RebaseInProgress);
+        }
+        if git
+            .is_cherry_pick_in_progress(worktree_path)
+            .unwrap_or(false)
+        {
+            return Err(GitServiceError::CherryPickInProgress);
+        }
+
+        // Get the target base branch reference and fetch if remote
+        let nbr = Self::find_branch(&main_repo, new_base_branch)?.into_reference();
+        if nbr.is_remote() {
+            self.fetch_branch_from_remote(&main_repo, &nbr)?;
+        }
+
+        // Get the merge base between the task branch and its original base
+        // This is where the task's work started
+        let merge_base = git
+            .git(
+                worktree_path,
+                ["merge-base", original_base_branch, task_branch],
+            )
+            .map(|s| s.trim().to_string())
+            .map_err(|e| {
+                GitServiceError::InvalidRepository(format!("Failed to find merge base: {e}"))
+            })?;
+
+        // Get the current HEAD of the task branch (where the work ends)
+        let task_head = git.get_head_sha(worktree_path).map_err(|e| {
+            GitServiceError::InvalidRepository(format!("Failed to get task HEAD: {e}"))
+        })?;
+
+        // Get the list of commits to cherry-pick
+        let commits_to_pick = git
+            .rev_list_range(worktree_path, &merge_base, &task_head)
+            .map_err(|e| {
+                GitServiceError::InvalidRepository(format!("Failed to list commits: {e}"))
+            })?;
+
+        if commits_to_pick.is_empty() {
+            return Err(GitServiceError::NoCommitsToCherryPick);
+        }
+
+        // Create the new branch at the new base
+        git.create_branch_at(repo_path, new_branch_name, new_base_branch)
+            .map_err(|e| {
+                GitServiceError::InvalidRepository(format!("Failed to create branch: {e}"))
+            })?;
+
+        // Checkout the new branch
+        git.checkout_branch(worktree_path, new_branch_name)
+            .map_err(|e| {
+                GitServiceError::InvalidRepository(format!("Failed to checkout branch: {e}"))
+            })?;
+
+        // Ensure identity for any commits produced by cherry-pick
+        self.ensure_cli_commit_identity(worktree_path)?;
+
+        // Cherry-pick the commits
+        if let Err(_e) = git.cherry_pick_range(worktree_path, &merge_base, &task_head) {
+            // If cherry-pick fails (likely due to conflicts), report it
+            let conflicts = git.get_conflicted_files(worktree_path).unwrap_or_default();
+            let files_part = if conflicts.is_empty() {
+                "".to_string()
+            } else {
+                let mut sample = conflicts.clone();
+                let total = sample.len();
+                sample.truncate(10);
+                let list = sample.join(", ");
+                if total > sample.len() {
+                    format!(
+                        " Conflicted files (showing {} of {}): {}.",
+                        sample.len(),
+                        total,
+                        list
+                    )
+                } else {
+                    format!(" Conflicted files: {list}.")
+                }
+            };
+            let msg = format!(
+                "Cherry-pick encountered merge conflicts while applying commits to '{}'.{files_part} Resolve conflicts and then continue or abort.",
+                new_branch_name
+            );
+            return Err(GitServiceError::MergeConflicts(msg));
+        }
+
+        // Get the final HEAD
+        let final_head = git.get_head_sha(worktree_path).map_err(|e| {
+            GitServiceError::InvalidRepository(format!("Failed to get final HEAD: {e}"))
+        })?;
+
+        Ok(final_head)
     }
 
     /// Collect file statistics from recent commits for ranking purposes
