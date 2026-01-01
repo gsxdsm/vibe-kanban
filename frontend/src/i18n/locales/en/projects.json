@@ -13,6 +13,7 @@
     "dialog": {
       "title": "Run Deployment Script",
       "description": "Run the deployment script for {{name}}",
+      "scriptLabel": "Deployment Script",
       "branchLabel": "Branch (optional)",
       "branchPlaceholder": "Select a branch to checkout first",
       "currentBranch": "Use current branch",
