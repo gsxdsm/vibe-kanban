@@ -1,5 +1,4 @@
 // vite.config.ts
-import mkcert from 'vite-plugin-mkcert'
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -52,7 +51,6 @@ export default schemas;
 
 export default defineConfig({
   plugins: [
-    mkcert(),
     react(),
     sentryVitePlugin({ org: "bloop-ai", project: "vibe-kanban" }),
     executorSchemasPlugin(),
