@@ -11,7 +11,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BranchSelector from '@/components/tasks/BranchSelector';
-import type { GitBranch, CherryPickToNewBranchResponse, CherryPickToNewBranchError } from 'shared/types';
+import type {
+  GitBranch,
+  CherryPickToNewBranchResponse,
+  CherryPickToNewBranchError,
+} from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useCherryPickToNewBranch } from '@/hooks/useCherryPickToNewBranch';
@@ -40,7 +44,9 @@ const CherryPickToNewBranchDialogImpl =
       const [error, setError] = useState<string | null>(null);
 
       // Map API error types to user-friendly messages
-      const getApiErrorMessage = (apiError: CherryPickToNewBranchError | undefined): string => {
+      const getApiErrorMessage = (
+        apiError: CherryPickToNewBranchError | undefined
+      ): string => {
         if (!apiError) {
           return t('cherryPickToNewBranch.dialog.error');
         }
@@ -145,7 +151,10 @@ const CherryPickToNewBranchDialogImpl =
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="new-branch-name" className="text-sm font-medium">
+                <label
+                  htmlFor="new-branch-name"
+                  className="text-sm font-medium"
+                >
                   {t('cherryPickToNewBranch.dialog.newBranchNameLabel')}
                 </label>
                 <Input
@@ -161,7 +170,9 @@ const CherryPickToNewBranchDialogImpl =
                       handleConfirm();
                     }
                   }}
-                  placeholder={t('cherryPickToNewBranch.dialog.newBranchNamePlaceholder')}
+                  placeholder={t(
+                    'cherryPickToNewBranch.dialog.newBranchNamePlaceholder'
+                  )}
                   disabled={cherryPickMutation.isPending}
                   autoFocus
                 />
@@ -178,7 +189,9 @@ const CherryPickToNewBranchDialogImpl =
                     setBaseBranch(branch);
                     setError(null);
                   }}
-                  placeholder={t('cherryPickToNewBranch.dialog.baseBranchPlaceholder')}
+                  placeholder={t(
+                    'cherryPickToNewBranch.dialog.baseBranchPlaceholder'
+                  )}
                   excludeCurrentBranch={false}
                 />
                 <p className="text-xs text-muted-foreground">
