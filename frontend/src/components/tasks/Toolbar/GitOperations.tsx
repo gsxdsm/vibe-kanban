@@ -582,8 +582,7 @@ function GitOperations({
               disabled={
                 isAttemptRunning ||
                 hasConflictsCalculated ||
-                selectedRepoStatus?.is_rebase_in_progress ||
-                (selectedRepoStatus?.commits_ahead ?? 0) === 0
+                selectedRepoStatus?.is_rebase_in_progress
               }
               variant="outline"
               size="xs"
