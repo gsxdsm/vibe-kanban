@@ -681,7 +681,11 @@ impl GitCli {
     }
 
     /// Checkout a branch in the worktree.
-    pub fn checkout_branch(&self, worktree_path: &Path, branch_name: &str) -> Result<(), GitCliError> {
+    pub fn checkout_branch(
+        &self,
+        worktree_path: &Path,
+        branch_name: &str,
+    ) -> Result<(), GitCliError> {
         self.git(worktree_path, ["checkout", branch_name])?;
         Ok(())
     }
@@ -695,7 +699,11 @@ impl GitCli {
     ) -> Result<Vec<String>, GitCliError> {
         let range = format!("{base}..{head}");
         let out = self.git(repo_path, ["rev-list", "--reverse", &range])?;
-        Ok(out.lines().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect())
+        Ok(out
+            .lines()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect())
     }
 
     /// Get the current HEAD commit SHA.

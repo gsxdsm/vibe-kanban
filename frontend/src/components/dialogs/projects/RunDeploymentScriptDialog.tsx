@@ -46,11 +46,14 @@ const RunDeploymentScriptDialogImpl =
   NiceModal.create<RunDeploymentScriptDialogProps>(({ project }) => {
     const modal = useModal();
     const { t } = useTranslation('projects');
-    const [selectedBranch, setSelectedBranch] = useState<string>(CURRENT_BRANCH_VALUE);
+    const [selectedBranch, setSelectedBranch] =
+      useState<string>(CURRENT_BRANCH_VALUE);
     const [isRunning, setIsRunning] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    const [output, setOutput] = useState<RunDeploymentScriptResponse | null>(null);
+    const [output, setOutput] = useState<RunDeploymentScriptResponse | null>(
+      null
+    );
     const [isOutputOpen, setIsOutputOpen] = useState(true);
 
     // Fetch repositories for this project
@@ -72,7 +75,8 @@ const RunDeploymentScriptDialogImpl =
 
       try {
         const result = await projectsApi.runDeploymentScript(project.id, {
-          branch: selectedBranch === CURRENT_BRANCH_VALUE ? null : selectedBranch,
+          branch:
+            selectedBranch === CURRENT_BRANCH_VALUE ? null : selectedBranch,
         });
 
         if ('type' in result) {
@@ -144,7 +148,8 @@ const RunDeploymentScriptDialogImpl =
                 {t('deployment.dialog.scriptLabel')}
               </label>
               <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-[200px] overflow-y-auto font-mono whitespace-pre-wrap break-words">
-                {project.deployment_script || t('deployment.errors.noScriptConfigured')}
+                {project.deployment_script ||
+                  t('deployment.errors.noScriptConfigured')}
               </pre>
             </div>
 

@@ -513,7 +513,10 @@ function GitOperations({
                 showPushInsteadOfMerge
                   ? // Push target branch disabled conditions (after direct merge)
                     // Since we just merged, there are commits to push unless already pushed
-                    pushing || isAttemptRunning || hasConflictsCalculated || pushSuccess
+                    pushing ||
+                    isAttemptRunning ||
+                    hasConflictsCalculated ||
+                    pushSuccess
                   : // Merge disabled conditions
                     mergeInfo.hasMergedPR ||
                     mergeInfo.hasOpenPR ||

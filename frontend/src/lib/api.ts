@@ -830,7 +830,9 @@ export const attemptsApi = {
   cherryPickToNewBranch: async (
     attemptId: string,
     data: CherryPickToNewBranchRequest
-  ): Promise<Result<CherryPickToNewBranchResponse, CherryPickToNewBranchError>> => {
+  ): Promise<
+    Result<CherryPickToNewBranchResponse, CherryPickToNewBranchError>
+  > => {
     const response = await makeRequest(
       `/api/task-attempts/${attemptId}/cherry-pick-to-new-branch`,
       {

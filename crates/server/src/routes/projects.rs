@@ -610,8 +610,10 @@ pub async fn run_deployment_script(
     Extension(project): Extension<Project>,
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<RunDeploymentScriptRequest>,
-) -> Result<ResponseJson<ApiResponse<RunDeploymentScriptResponse, RunDeploymentScriptError>>, ApiError>
-{
+) -> Result<
+    ResponseJson<ApiResponse<RunDeploymentScriptResponse, RunDeploymentScriptError>>,
+    ApiError,
+> {
     // Check if deployment script is configured
     let script = match &project.deployment_script {
         Some(s) if !s.trim().is_empty() => s.clone(),
