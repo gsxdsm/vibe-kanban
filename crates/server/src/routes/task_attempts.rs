@@ -1216,13 +1216,12 @@ pub async fn cherry_pick_to_new_branch(
 
     // Get the starting commit for this task attempt
     // This is the commit SHA before any task changes were made
-    let task_start_commit =
-        ExecutionProcessRepoState::find_first_before_head_commit_for_workspace(
-            pool,
-            workspace.id,
-            payload.repo_id,
-        )
-        .await?;
+    let task_start_commit = ExecutionProcessRepoState::find_first_before_head_commit_for_workspace(
+        pool,
+        workspace.id,
+        payload.repo_id,
+    )
+    .await?;
 
     let task_start_commit = match task_start_commit {
         Some(commit) => commit,
@@ -1267,24 +1266,24 @@ pub async fn cherry_pick_to_new_branch(
         Err(e) => {
             use services::services::git::GitServiceError;
             match e {
-                GitServiceError::MergeConflicts(msg) => Ok(ResponseJson(ApiResponse::error_with_data(
-                    CherryPickToNewBranchError::CherryPickConflicts { message: msg },
-                ))),
-                GitServiceError::RebaseInProgress => Ok(ResponseJson(ApiResponse::error_with_data(
-                    CherryPickToNewBranchError::RebaseInProgress {
-                        repo_name: repo.name.clone(),
-                    },
-                ))),
-                GitServiceError::WorktreeDirty(_, _) => Ok(ResponseJson(ApiResponse::error_with_data(
-                    CherryPickToNewBranchError::WorktreeDirty {
-                        repo_name: repo.name.clone(),
-                    },
-                ))),
-                GitServiceError::NoCommitsToCherryPick => {
+                GitServiceError::MergeConflicts(msg) => {
                     Ok(ResponseJson(ApiResponse::error_with_data(
-                        CherryPickToNewBranchError::NoCommitsToCherryPick,
+                        CherryPickToNewBranchError::CherryPickConflicts { message: msg },
                     )))
                 }
+                GitServiceError::RebaseInProgress => Ok(ResponseJson(
+                    ApiResponse::error_with_data(CherryPickToNewBranchError::RebaseInProgress {
+                        repo_name: repo.name.clone(),
+                    }),
+                )),
+                GitServiceError::WorktreeDirty(_, _) => Ok(ResponseJson(
+                    ApiResponse::error_with_data(CherryPickToNewBranchError::WorktreeDirty {
+                        repo_name: repo.name.clone(),
+                    }),
+                )),
+                GitServiceError::NoCommitsToCherryPick => Ok(ResponseJson(
+                    ApiResponse::error_with_data(CherryPickToNewBranchError::NoCommitsToCherryPick),
+                )),
                 GitServiceError::CherryPickInProgress => {
                     Ok(ResponseJson(ApiResponse::error_with_data(
                         CherryPickToNewBranchError::CherryPickInProgress {
@@ -1292,13 +1291,11 @@ pub async fn cherry_pick_to_new_branch(
                         },
                     )))
                 }
-                GitServiceError::BranchNotFound(branch) => {
-                    Ok(ResponseJson(ApiResponse::error_with_data(
-                        CherryPickToNewBranchError::BaseBranchNotFound {
-                            branch_name: branch,
-                        },
-                    )))
-                }
+                GitServiceError::BranchNotFound(branch) => Ok(ResponseJson(
+                    ApiResponse::error_with_data(CherryPickToNewBranchError::BaseBranchNotFound {
+                        branch_name: branch,
+                    }),
+                )),
                 GitServiceError::InvalidRepository(msg) => {
                     // Map InvalidRepository errors to CherryPickConflicts with the message
                     // This provides a user-friendly error instead of "unknown error"
@@ -1845,7 +1842,10 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/stop", post(stop_task_attempt_execution))
         .route("/change-target-branch", post(change_target_branch))
         .route("/rename-branch", post(rename_branch))
-        .route("/cherry-pick-to-new-branch", post(cherry_pick_to_new_branch))
+        .route(
+            "/cherry-pick-to-new-branch",
+            post(cherry_pick_to_new_branch),
+        )
         .route("/repos", get(get_task_attempt_repos))
         .layer(from_fn_with_state(
             deployment.clone(),

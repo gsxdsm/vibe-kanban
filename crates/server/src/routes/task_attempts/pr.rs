@@ -313,9 +313,7 @@ pub async fn create_github_pr(
                 .to_lowercase()
                 != "false";
 
-            if auto_open_pr
-                && let Err(e) = utils::browser::open_browser(&pr_info.url).await
-            {
+            if auto_open_pr && let Err(e) = utils::browser::open_browser(&pr_info.url).await {
                 tracing::warn!("Failed to open PR in browser: {}", e);
             }
             deployment

@@ -184,11 +184,14 @@ export function NextActionCard({
           {!error && (
             <button
               onClick={() =>
-                setSearchParams((prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.set('view', 'diffs');
-                  return next;
-                }, { replace: true })
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set('view', 'diffs');
+                    return next;
+                  },
+                  { replace: true }
+                )
               }
               className="flex items-center gap-1.5 text-sm shrink-0 cursor-pointer hover:underline transition-all"
               aria-label={t('attempt.diffs')}
@@ -241,11 +244,14 @@ export function NextActionCard({
                     size="sm"
                     className="h-7 w-7 p-0"
                     onClick={() =>
-                      setSearchParams((prev) => {
-                        const next = new URLSearchParams(prev);
-                        next.set('view', 'diffs');
-                        return next;
-                      }, { replace: true })
+                      setSearchParams(
+                        (prev) => {
+                          const next = new URLSearchParams(prev);
+                          next.set('view', 'diffs');
+                          return next;
+                        },
+                        { replace: true }
+                      )
                     }
                     aria-label={t('attempt.diffs')}
                   >
@@ -313,11 +319,14 @@ export function NextActionCard({
                           ? () => stop()
                           : () => {
                               start();
-                              setSearchParams((prev) => {
-                                const next = new URLSearchParams(prev);
-                                next.set('view', 'preview');
-                                return next;
-                              }, { replace: true });
+                              setSearchParams(
+                                (prev) => {
+                                  const next = new URLSearchParams(prev);
+                                  next.set('view', 'preview');
+                                  return next;
+                                },
+                                { replace: true }
+                              );
                             }
                       }
                       disabled={
