@@ -297,7 +297,9 @@ export function ProjectSettings() {
       .getRepository(selectedProjectId, selectedScriptsRepoId)
       .then((projectRepo) => {
         setSelectedProjectRepo(projectRepo);
-        setScriptsDraft(projectRepoToScriptsFormState(projectRepo, selectedProject));
+        setScriptsDraft(
+          projectRepoToScriptsFormState(projectRepo, selectedProject)
+        );
       })
       .catch((err) => {
         setScriptsError(
@@ -452,12 +454,14 @@ export function ProjectSettings() {
         // Update the selected project with the new deployment script
         setSelectedProject({
           ...selectedProject,
-          deployment_script: scriptsDraft.deployment_script.trim() || null
+          deployment_script: scriptsDraft.deployment_script.trim() || null,
         });
       }
 
       setSelectedProjectRepo(updatedRepo);
-      setScriptsDraft(projectRepoToScriptsFormState(updatedRepo, selectedProject));
+      setScriptsDraft(
+        projectRepoToScriptsFormState(updatedRepo, selectedProject)
+      );
       setScriptsSuccess(true);
       setTimeout(() => setScriptsSuccess(false), 3000);
     } catch (err) {
@@ -476,7 +480,9 @@ export function ProjectSettings() {
 
   const handleDiscardScripts = () => {
     if (!selectedProjectRepo) return;
-    setScriptsDraft(projectRepoToScriptsFormState(selectedProjectRepo, selectedProject));
+    setScriptsDraft(
+      projectRepoToScriptsFormState(selectedProjectRepo, selectedProject)
+    );
   };
 
   const updateDraft = (updates: Partial<ProjectFormState>) => {
@@ -657,7 +663,6 @@ export function ProjectSettings() {
                   {t('settings.projects.scripts.agentWorkingDir.helper')}
                 </p>
               </div>
-
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 pt-2">
@@ -950,7 +955,9 @@ export function ProjectSettings() {
                           id="deployment-script"
                           value={scriptsDraft.deployment_script}
                           onChange={(e) =>
-                            updateScriptsDraft({ deployment_script: e.target.value })
+                            updateScriptsDraft({
+                              deployment_script: e.target.value,
+                            })
                           }
                           placeholder={placeholders.deployment}
                           maxRows={12}
