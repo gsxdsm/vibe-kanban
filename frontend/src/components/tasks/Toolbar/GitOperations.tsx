@@ -8,6 +8,7 @@ import {
   CheckCircle,
   ExternalLink,
   Copy,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -148,11 +149,26 @@ function GitOperations({
     };
   }, [getSelectedRepoStatus]);
 
+  // For non-PR tasks: after merging, show Push button instead of Merge
+  // Switch back to Merge when there are new commits ahead
+  const showPushInsteadOfMerge = useMemo(() => {
+    // Only applies to non-PR tasks (tasks not created from a PR)
+    if (task.open_pr) return false;
+    // Show Push after a successful merge when there are no new commits to merge
+    const commitsAhead = selectedRepoStatus?.commits_ahead ?? 0;
+    return mergeInfo.hasMerged && commitsAhead === 0;
+  }, [task.open_pr, mergeInfo.hasMerged, selectedRepoStatus?.commits_ahead]);
+
   const mergeButtonLabel = useMemo(() => {
+    if (showPushInsteadOfMerge) {
+      if (pushSuccess) return t('git.states.pushed');
+      if (pushing) return t('git.states.pushing');
+      return t('git.states.push');
+    }
     if (mergeSuccess) return t('git.states.merged');
     if (merging) return t('git.states.merging');
     return t('git.states.merge');
-  }, [mergeSuccess, merging, t]);
+  }, [showPushInsteadOfMerge, mergeSuccess, merging, pushSuccess, pushing, t]);
 
   const rebaseButtonLabel = useMemo(() => {
     if (rebasing) return t('git.states.rebasing');
@@ -175,12 +191,15 @@ function GitOperations({
     await performMerge();
   };
 
-  const handlePushClick = async () => {
+  const handlePushClick = async (targetBranch?: string) => {
     try {
       setPushing(true);
       const repoId = getSelectedRepoId();
       if (!repoId) return;
-      await git.actions.push({ repo_id: repoId });
+      await git.actions.push({
+        repo_id: repoId,
+        target_branch: targetBranch ?? null,
+      });
       setPushSuccess(true);
       setTimeout(() => setPushSuccess(false), 2000);
     } finally {
@@ -485,23 +504,36 @@ function GitOperations({
         {selectedRepoStatus && (
           <div className={actionsClasses}>
             <Button
-              onClick={handleMergeClick}
+              onClick={
+                showPushInsteadOfMerge
+                  ? () => handlePushClick(selectedRepoStatus.target_branch_name)
+                  : handleMergeClick
+              }
               disabled={
-                mergeInfo.hasMergedPR ||
-                mergeInfo.hasOpenPR ||
-                merging ||
-                hasConflictsCalculated ||
-                isAttemptRunning ||
-                ((selectedRepoStatus?.commits_ahead ?? 0) === 0 &&
-                  !pushSuccess &&
-                  !mergeSuccess)
+                showPushInsteadOfMerge
+                  ? // Push target branch disabled conditions (after direct merge)
+                    // Since we just merged, there are commits to push unless already pushed
+                    pushing || isAttemptRunning || hasConflictsCalculated || pushSuccess
+                  : // Merge disabled conditions
+                    mergeInfo.hasMergedPR ||
+                    mergeInfo.hasOpenPR ||
+                    merging ||
+                    hasConflictsCalculated ||
+                    isAttemptRunning ||
+                    ((selectedRepoStatus?.commits_ahead ?? 0) === 0 &&
+                      !pushSuccess &&
+                      !mergeSuccess)
               }
               variant="outline"
               size="xs"
               className="border-success text-success hover:bg-success gap-1 shrink-0"
               aria-label={mergeButtonLabel}
             >
-              <GitBranchIcon className="h-3.5 w-3.5" />
+              {showPushInsteadOfMerge ? (
+                <Upload className="h-3.5 w-3.5" />
+              ) : (
+                <GitBranchIcon className="h-3.5 w-3.5" />
+              )}
               <span className="truncate max-w-[10ch]">{mergeButtonLabel}</span>
             </Button>
 

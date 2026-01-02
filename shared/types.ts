@@ -232,7 +232,12 @@ export type ChangeTargetBranchResponse = { repo_id: string, new_target_branch: s
 
 export type MergeTaskAttemptRequest = { repo_id: string, };
 
-export type PushTaskAttemptRequest = { repo_id: string, };
+export type PushTaskAttemptRequest = { repo_id: string, 
+/**
+ * Optional branch to push. If not specified, pushes the workspace branch.
+ * Used to push the target branch after a direct merge.
+ */
+target_branch: string | null, };
 
 export type RenameBranchRequest = { new_branch_name: string, };
 
