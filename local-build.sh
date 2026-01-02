@@ -72,7 +72,7 @@ zip -q vibe-kanban-review.zip vibe-kanban-review
 rm -f vibe-kanban-review
 mv vibe-kanban-review.zip npx-cli/dist/$PLATFORM/vibe-kanban-review.zip
 
-echo "✅ NPM package ready!"
+echo "✅ Build complete!"
 echo "📁 Files created:"
 echo "   - npx-cli/dist/$PLATFORM/vibe-kanban.zip"
 echo "   - npx-cli/dist/$PLATFORM/vibe-kanban-mcp.zip"
