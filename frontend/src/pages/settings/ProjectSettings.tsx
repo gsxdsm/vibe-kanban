@@ -38,7 +38,6 @@ interface ProjectFormState {
   dev_script: string;
   dev_script_working_dir: string;
   default_agent_working_dir: string;
-  deployment_script: string;
   prefer_remote_branch: boolean;
 }
 
@@ -47,6 +46,7 @@ interface RepoScriptsFormState {
   parallel_setup_script: boolean;
   cleanup_script: string;
   copy_files: string;
+  deployment_script: string;
 }
 
 function projectToFormState(project: Project): ProjectFormState {
@@ -55,19 +55,20 @@ function projectToFormState(project: Project): ProjectFormState {
     dev_script: project.dev_script ?? '',
     dev_script_working_dir: project.dev_script_working_dir ?? '',
     default_agent_working_dir: project.default_agent_working_dir ?? '',
-    deployment_script: project.deployment_script ?? '',
     prefer_remote_branch: project.prefer_remote_branch,
   };
 }
 
 function projectRepoToScriptsFormState(
-  projectRepo: ProjectRepo | null
+  projectRepo: ProjectRepo | null,
+  project?: Project | null
 ): RepoScriptsFormState {
   return {
     setup_script: projectRepo?.setup_script ?? '',
     parallel_setup_script: projectRepo?.parallel_setup_script ?? false,
     cleanup_script: projectRepo?.cleanup_script ?? '',
     copy_files: projectRepo?.copy_files ?? '',
+    deployment_script: project?.deployment_script ?? '',
   };
 }
 
@@ -131,9 +132,9 @@ export function ProjectSettings() {
     if (!scriptsDraft || !selectedProjectRepo) return false;
     return !isEqual(
       scriptsDraft,
-      projectRepoToScriptsFormState(selectedProjectRepo)
+      projectRepoToScriptsFormState(selectedProjectRepo, selectedProject)
     );
-  }, [scriptsDraft, selectedProjectRepo]);
+  }, [scriptsDraft, selectedProjectRepo, selectedProject]);
 
   // Combined check for any unsaved changes
   const hasUnsavedChanges =
@@ -296,7 +297,7 @@ export function ProjectSettings() {
       .getRepository(selectedProjectId, selectedScriptsRepoId)
       .then((projectRepo) => {
         setSelectedProjectRepo(projectRepo);
-        setScriptsDraft(projectRepoToScriptsFormState(projectRepo));
+        setScriptsDraft(projectRepoToScriptsFormState(projectRepo, selectedProject));
       })
       .catch((err) => {
         setScriptsError(
@@ -308,7 +309,7 @@ export function ProjectSettings() {
         setScriptsDraft(null);
       })
       .finally(() => setLoadingProjectRepo(false));
-  }, [selectedProjectId, selectedScriptsRepoId]);
+  }, [selectedProjectId, selectedScriptsRepoId, selectedProject]);
 
   const handleAddRepository = async () => {
     if (!selectedProjectId) return;
@@ -401,7 +402,7 @@ export function ProjectSettings() {
         dev_script_working_dir: draft.dev_script_working_dir.trim() || null,
         default_agent_working_dir:
           draft.default_agent_working_dir.trim() || null,
-        deployment_script: draft.deployment_script.trim() || null,
+        deployment_script: null, // deployment script moved to per-repo section
         prefer_remote_branch: draft.prefer_remote_branch,
       };
 
@@ -434,8 +435,29 @@ export function ProjectSettings() {
           parallel_setup_script: scriptsDraft.parallel_setup_script,
         }
       );
+
+      // Update project-level deployment script
+      if (selectedProject) {
+        const updateData: UpdateProject = {
+          name: selectedProject.name,
+          dev_script: selectedProject.dev_script,
+          dev_script_working_dir: selectedProject.dev_script_working_dir,
+          default_agent_working_dir: selectedProject.default_agent_working_dir,
+          deployment_script: scriptsDraft.deployment_script.trim() || null,
+          prefer_remote_branch: selectedProject.prefer_remote_branch,
+        };
+
+        await projectsApi.update(selectedProject.id, updateData);
+
+        // Update the selected project with the new deployment script
+        setSelectedProject({
+          ...selectedProject,
+          deployment_script: scriptsDraft.deployment_script.trim() || null
+        });
+      }
+
       setSelectedProjectRepo(updatedRepo);
-      setScriptsDraft(projectRepoToScriptsFormState(updatedRepo));
+      setScriptsDraft(projectRepoToScriptsFormState(updatedRepo, selectedProject));
       setScriptsSuccess(true);
       setTimeout(() => setScriptsSuccess(false), 3000);
     } catch (err) {
@@ -454,7 +476,7 @@ export function ProjectSettings() {
 
   const handleDiscardScripts = () => {
     if (!selectedProjectRepo) return;
-    setScriptsDraft(projectRepoToScriptsFormState(selectedProjectRepo));
+    setScriptsDraft(projectRepoToScriptsFormState(selectedProjectRepo, selectedProject));
   };
 
   const updateDraft = (updates: Partial<ProjectFormState>) => {
@@ -636,24 +658,6 @@ export function ProjectSettings() {
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="deployment-script">
-                  {t('settings.projects.scripts.deployment.label')}
-                </Label>
-                <AutoExpandingTextarea
-                  id="deployment-script"
-                  value={draft.deployment_script}
-                  onChange={(e) =>
-                    updateDraft({ deployment_script: e.target.value })
-                  }
-                  placeholder={placeholders.deployment}
-                  maxRows={12}
-                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
-                />
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.projects.scripts.deployment.helper')}
-                </p>
-              </div>
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 pt-2">
@@ -935,6 +939,25 @@ export function ProjectSettings() {
                         />
                         <p className="text-sm text-muted-foreground">
                           {t('settings.projects.scripts.copyFiles.helper')}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="deployment-script">
+                          {t('settings.projects.scripts.deployment.label')}
+                        </Label>
+                        <AutoExpandingTextarea
+                          id="deployment-script"
+                          value={scriptsDraft.deployment_script}
+                          onChange={(e) =>
+                            updateScriptsDraft({ deployment_script: e.target.value })
+                          }
+                          placeholder={placeholders.deployment}
+                          maxRows={12}
+                          className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          {t('settings.projects.scripts.deployment.helper')}
                         </p>
                       </div>
 
