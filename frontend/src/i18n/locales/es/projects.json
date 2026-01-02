@@ -3,10 +3,35 @@
   "subtitle": "Gestiona tus proyectos y sigue su progreso",
   "createProject": "Crear Proyecto",
   "linkToOrganization": "Vincular a Proyecto Remoto",
+  "runDeployment": "Ejecutar Despliegue",
   "loading": "Cargando proyectos...",
   "errors": {
     "fetchFailed": "Error al cargar proyectos",
     "deleteFailed": "Error al eliminar el proyecto"
+  },
+  "deployment": {
+    "dialog": {
+      "title": "Ejecutar Script de Despliegue",
+      "description": "Ejecutar el script de despliegue para {{name}}",
+      "scriptLabel": "Script de Despliegue",
+      "branchLabel": "Rama (opcional)",
+      "branchPlaceholder": "Selecciona una rama para cambiar primero",
+      "currentBranch": "Usar rama actual",
+      "branchHelper": "Opcionalmente cambia a una rama específica antes de ejecutar el script de despliegue",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "run": "Ejecutar Despliegue",
+      "running": "Ejecutando...",
+      "success": "¡Script de despliegue completado correctamente!",
+      "outputLabel": "Salida del Script"
+    },
+    "errors": {
+      "noScriptConfigured": "No hay script de despliegue configurado para este proyecto. Configura uno en la configuración del proyecto.",
+      "noRepositories": "No se encontraron repositorios para este proyecto.",
+      "gitCheckoutFailed": "Error al cambiar de rama: {{message}}",
+      "scriptFailed": "El script de despliegue falló con código de salida {{exitCode}}",
+      "unknown": "Ocurrió un error desconocido"
+    }
   },
   "empty": {
     "title": "Aún no hay proyectos",

@@ -19,5 +19,7 @@ export function useScriptPlaceholders(): ScriptPlaceholders {
     dev: '#!/bin/bash\nnpm run dev\n# Add dev server start command here...',
     cleanup:
       '#!/bin/bash\n# Add cleanup commands here...\n# This runs after coding agent execution',
+    deployment:
+      '#!/bin/bash\n# Add deployment commands here...\n# Example: npm run build && npm run deploy',
   };
 }

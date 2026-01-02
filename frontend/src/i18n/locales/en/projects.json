@@ -3,10 +3,35 @@
   "subtitle": "Manage your projects and track their progress",
   "createProject": "Create Project",
   "linkToOrganization": "Link to Remote Project",
+  "runDeployment": "Run Deployment",
   "loading": "Loading projects...",
   "errors": {
     "fetchFailed": "Failed to fetch projects",
     "deleteFailed": "Failed to delete project"
+  },
+  "deployment": {
+    "dialog": {
+      "title": "Run Deployment Script",
+      "description": "Run the deployment script for {{name}}",
+      "scriptLabel": "Deployment Script",
+      "branchLabel": "Branch (optional)",
+      "branchPlaceholder": "Select a branch to checkout first",
+      "currentBranch": "Use current branch",
+      "branchHelper": "Optionally checkout a specific branch before running the deployment script",
+      "cancel": "Cancel",
+      "close": "Close",
+      "run": "Run Deployment",
+      "running": "Running...",
+      "success": "Deployment script completed successfully!",
+      "outputLabel": "Script Output"
+    },
+    "errors": {
+      "noScriptConfigured": "No deployment script configured for this project. Configure one in project settings.",
+      "noRepositories": "No repositories found for this project.",
+      "gitCheckoutFailed": "Failed to checkout branch: {{message}}",
+      "scriptFailed": "Deployment script failed with exit code {{exitCode}}",
+      "unknown": "An unknown error occurred"
+    }
   },
   "empty": {
     "title": "No projects yet",

@@ -3,10 +3,35 @@
   "subtitle": "プロジェクトを管理し、進捗を追跡します",
   "createProject": "プロジェクトを作成",
   "linkToOrganization": "リモートプロジェクトにリンク",
+  "runDeployment": "デプロイを実行",
   "loading": "プロジェクトを読み込み中...",
   "errors": {
     "fetchFailed": "プロジェクトの取得に失敗しました",
     "deleteFailed": "プロジェクトの削除に失敗しました"
+  },
+  "deployment": {
+    "dialog": {
+      "title": "デプロイスクリプトを実行",
+      "description": "{{name}}のデプロイスクリプトを実行します",
+      "scriptLabel": "デプロイスクリプト",
+      "branchLabel": "ブランチ（オプション）",
+      "branchPlaceholder": "先にチェックアウトするブランチを選択",
+      "currentBranch": "現在のブランチを使用",
+      "branchHelper": "デプロイスクリプト実行前に特定のブランチをチェックアウトできます",
+      "cancel": "キャンセル",
+      "close": "閉じる",
+      "run": "デプロイを実行",
+      "running": "実行中...",
+      "success": "デプロイスクリプトが正常に完了しました！",
+      "outputLabel": "スクリプト出力"
+    },
+    "errors": {
+      "noScriptConfigured": "このプロジェクトにはデプロイスクリプトが設定されていません。プロジェクト設定で設定してください。",
+      "noRepositories": "このプロジェクトにはリポジトリが見つかりません。",
+      "gitCheckoutFailed": "ブランチのチェックアウトに失敗しました: {{message}}",
+      "scriptFailed": "デプロイスクリプトが終了コード {{exitCode}} で失敗しました",
+      "unknown": "不明なエラーが発生しました"
+    }
   },
   "empty": {
     "title": "プロジェクトがありません",

@@ -3,10 +3,35 @@
   "subtitle": "프로젝트를 관리하고 진행 상황을 추적하세요",
   "createProject": "프로젝트 생성",
   "linkToOrganization": "원격 프로젝트에 연결",
+  "runDeployment": "배포 실행",
   "loading": "프로젝트 로딩 중...",
   "errors": {
     "fetchFailed": "프로젝트를 불러오지 못했습니다",
     "deleteFailed": "프로젝트 삭제에 실패했습니다"
+  },
+  "deployment": {
+    "dialog": {
+      "title": "배포 스크립트 실행",
+      "description": "{{name}}의 배포 스크립트를 실행합니다",
+      "scriptLabel": "배포 스크립트",
+      "branchLabel": "브랜치 (선택사항)",
+      "branchPlaceholder": "먼저 체크아웃할 브랜치 선택",
+      "currentBranch": "현재 브랜치 사용",
+      "branchHelper": "배포 스크립트 실행 전 특정 브랜치를 체크아웃할 수 있습니다",
+      "cancel": "취소",
+      "close": "닫기",
+      "run": "배포 실행",
+      "running": "실행 중...",
+      "success": "배포 스크립트가 성공적으로 완료되었습니다!",
+      "outputLabel": "스크립트 출력"
+    },
+    "errors": {
+      "noScriptConfigured": "이 프로젝트에 배포 스크립트가 설정되지 않았습니다. 프로젝트 설정에서 설정해주세요.",
+      "noRepositories": "이 프로젝트에 리포지토리가 없습니다.",
+      "gitCheckoutFailed": "브랜치 체크아웃 실패: {{message}}",
+      "scriptFailed": "배포 스크립트가 종료 코드 {{exitCode}}로 실패했습니다",
+      "unknown": "알 수 없는 오류가 발생했습니다"
+    }
   },
   "empty": {
     "title": "아직 프로젝트가 없습니다",

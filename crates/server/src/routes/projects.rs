@@ -19,7 +19,7 @@ use db::models::{
 };
 use deployment::Deployment;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use services::services::{
     file_search_cache::SearchQuery, project::ProjectServiceError,
     remote_client::CreateRemoteProjectPayload,
@@ -582,6 +582,167 @@ pub async fn update_project_repository(
     }
 }
 
+#[derive(Debug, Deserialize, TS)]
+pub struct RunDeploymentScriptRequest {
+    /// Optional branch to checkout before running the script
+    pub branch: Option<String>,
+}
+
+#[derive(Debug, Serialize, TS)]
+pub struct RunDeploymentScriptResponse {
+    pub started: bool,
+    pub message: String,
+    pub stdout: Option<String>,
+    pub stderr: Option<String>,
+    pub exit_code: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[ts(tag = "type", rename_all = "snake_case")]
+pub enum RunDeploymentScriptError {
+    NoScriptConfigured,
+    NoRepositories,
+    GitCheckoutFailed { message: String },
+}
+
+pub async fn run_deployment_script(
+    Extension(project): Extension<Project>,
+    State(deployment): State<DeploymentImpl>,
+    Json(payload): Json<RunDeploymentScriptRequest>,
+) -> Result<ResponseJson<ApiResponse<RunDeploymentScriptResponse, RunDeploymentScriptError>>, ApiError>
+{
+    // Check if deployment script is configured
+    let script = match &project.deployment_script {
+        Some(s) if !s.trim().is_empty() => s.clone(),
+        _ => {
+            return Ok(ResponseJson(ApiResponse::error_with_data(
+                RunDeploymentScriptError::NoScriptConfigured,
+            )));
+        }
+    };
+
+    // Get repositories for this project
+    let repositories = deployment
+        .project()
+        .get_repositories(&deployment.db().pool, project.id)
+        .await?;
+
+    if repositories.is_empty() {
+        return Ok(ResponseJson(ApiResponse::error_with_data(
+            RunDeploymentScriptError::NoRepositories,
+        )));
+    }
+
+    // Use the first repository's path as the working directory
+    let repo_path = PathBuf::from(&repositories[0].path);
+
+    // If a branch is specified, checkout that branch first
+    if let Some(ref branch) = payload.branch {
+        let checkout_result = tokio::process::Command::new("git")
+            .args(["checkout", branch])
+            .current_dir(&repo_path)
+            .output()
+            .await;
+
+        match checkout_result {
+            Ok(output) if !output.status.success() => {
+                let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+                return Ok(ResponseJson(ApiResponse::error_with_data(
+                    RunDeploymentScriptError::GitCheckoutFailed { message: stderr },
+                )));
+            }
+            Err(e) => {
+                return Ok(ResponseJson(ApiResponse::error_with_data(
+                    RunDeploymentScriptError::GitCheckoutFailed {
+                        message: e.to_string(),
+                    },
+                )));
+            }
+            Ok(_) => {
+                tracing::info!(
+                    "Checked out branch {} for deployment in project {}",
+                    branch,
+                    project.id
+                );
+            }
+        }
+    }
+
+    // Execute the deployment script and wait for completion
+    let shell = if cfg!(target_os = "windows") {
+        "cmd"
+    } else {
+        "sh"
+    };
+    let shell_arg = if cfg!(target_os = "windows") {
+        "/C"
+    } else {
+        "-c"
+    };
+
+    tracing::info!(
+        "Running deployment script for project {} in {}",
+        project.id,
+        repo_path.display()
+    );
+
+    let output_result = tokio::process::Command::new(shell)
+        .arg(shell_arg)
+        .arg(&script)
+        .current_dir(&repo_path)
+        .output()
+        .await;
+
+    match output_result {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            let exit_code = output.status.code();
+            let success = output.status.success();
+
+            tracing::info!(
+                "Deployment script for project {} completed with exit code {:?}",
+                project.id,
+                exit_code
+            );
+
+            deployment
+                .track_if_analytics_allowed(
+                    "deployment_script_completed",
+                    serde_json::json!({
+                        "project_id": project.id.to_string(),
+                        "branch": payload.branch,
+                        "exit_code": exit_code,
+                        "success": success,
+                    }),
+                )
+                .await;
+
+            Ok(ResponseJson(ApiResponse::success(
+                RunDeploymentScriptResponse {
+                    started: true,
+                    message: if success {
+                        "Deployment script completed successfully".to_string()
+                    } else {
+                        format!("Deployment script failed with exit code {:?}", exit_code)
+                    },
+                    stdout: Some(stdout),
+                    stderr: Some(stderr),
+                    exit_code,
+                },
+            )))
+        }
+        Err(e) => {
+            tracing::error!("Failed to run deployment script: {}", e);
+            Ok(ResponseJson(ApiResponse::error(&format!(
+                "Failed to run deployment script: {}",
+                e
+            ))))
+        }
+    }
+}
+
 pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
     let project_id_router = Router::new()
         .route(
@@ -591,6 +752,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/remote/members", get(get_project_remote_members))
         .route("/search", get(search_project_files))
         .route("/open-editor", post(open_project_in_editor))
+        .route("/run-deployment-script", post(run_deployment_script))
         .route(
             "/link",
             post(link_project_to_existing_remote).delete(unlink_project),

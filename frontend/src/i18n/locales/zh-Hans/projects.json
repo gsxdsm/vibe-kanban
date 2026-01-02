@@ -3,10 +3,35 @@
   "subtitle": "管理您的项目并跟踪其进度",
   "createProject": "创建项目",
   "linkToOrganization": "链接到远程项目",
+  "runDeployment": "运行部署",
   "loading": "加载项目中...",
   "errors": {
     "fetchFailed": "获取项目失败",
     "deleteFailed": "删除项目失败"
+  },
+  "deployment": {
+    "dialog": {
+      "title": "运行部署脚本",
+      "description": "为 {{name}} 运行部署脚本",
+      "scriptLabel": "部署脚本",
+      "branchLabel": "分支（可选）",
+      "branchPlaceholder": "选择要先检出的分支",
+      "currentBranch": "使用当前分支",
+      "branchHelper": "可选择在运行部署脚本前检出特定分支",
+      "cancel": "取消",
+      "close": "关闭",
+      "run": "运行部署",
+      "running": "运行中...",
+      "success": "部署脚本已成功完成！",
+      "outputLabel": "脚本输出"
+    },
+    "errors": {
+      "noScriptConfigured": "此项目未配置部署脚本。请在项目设置中配置。",
+      "noRepositories": "此项目没有仓库。",
+      "gitCheckoutFailed": "分支检出失败：{{message}}",
+      "scriptFailed": "部署脚本失败，退出代码 {{exitCode}}",
+      "unknown": "发生未知错误"
+    }
   },
   "empty": {
     "title": "还没有项目",
