@@ -28,6 +28,8 @@ Environment="CARGO_TARGET_DIR=$HOME/.cargo/shared-target"
 Environment="RUSTC_WRAPPER=sccache"
 Environment="PATH=$PATH:$HOME/.local/share/pnpm/bin:$HOME/.cargo/bin"
 Environment="NVM_DIR=$HOME/.nvm"
+Environment="VK_AUTO_OPEN_PR=false"
+Environment="VK_AUTO_OPEN_APP=false"
 User=$USER
 Group=$USER
 WorkingDirectory=$INSTALL_DIR
