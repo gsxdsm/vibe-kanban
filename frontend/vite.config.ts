@@ -76,9 +76,7 @@ export default defineConfig({
       allow: [path.resolve(__dirname, "."), path.resolve(__dirname, "..")],
     },
     open: process.env.VITE_OPEN === "true",
-    allowedHosts: [
-      ".trycloudflare.com", // allow all cloudflared tunnels
-    ],
+    allowedHosts: true,
   },
   optimizeDeps: {
     exclude: ["wa-sqlite"],
