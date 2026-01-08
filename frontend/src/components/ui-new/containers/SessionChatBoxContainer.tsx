@@ -6,7 +6,6 @@ import {
   type BaseCodingAgent,
 } from 'shared/types';
 import { useAttemptExecution } from '@/hooks/useAttemptExecution';
-import { useExecutionProcesses } from '@/hooks/useExecutionProcesses';
 import { useUserSystem } from '@/components/ConfigProvider';
 import { useApprovalFeedbackOptional } from '@/contexts/ApprovalFeedbackContext';
 import { useMessageEditContext } from '@/contexts/MessageEditContext';
@@ -177,23 +176,21 @@ export function SessionChatBoxContainer({
   // User profiles, config preference, and latest executor from processes
   const { profiles, config } = useUserSystem();
 
-  // Fetch processes from last session to get full profile (only in new session mode)
-  const lastSessionId = isNewSessionMode ? sessions?.[0]?.id : undefined;
-  const { executionProcesses: lastSessionProcesses } =
-    useExecutionProcesses(lastSessionId);
+  // Get last used executor from the most recently used session in this workspace
+  const lastSessionExecutor = useMemo(() => {
+    if (!sessions?.length) return null;
+    // Sessions are sorted by most recently used (first is most recent)
+    const mostRecentSession = sessions[0];
+    return mostRecentSession?.executor ?? null;
+  }, [sessions]);
 
-  // Compute latestProfileId: current processes > last session processes > session metadata
+  // Compute latestProfileId: from processes, or fall back to last session's executor
   const latestProfileId = useMemo(() => {
-    // Current session's processes take priority
+    // If we have processes (existing session), use them
     const fromProcesses = getLatestProfileFromProcesses(processes);
     if (fromProcesses) return fromProcesses;
 
-    // Try full profile from last session's processes (includes variant)
-    const fromLastSession = getLatestProfileFromProcesses(lastSessionProcesses);
-    if (fromLastSession) return fromLastSession;
-
-    // Fallback: just executor from session metadata, no variant
-    const lastSessionExecutor = sessions?.[0]?.executor;
+    // Fall back to last session's executor (useful for new session mode)
     if (lastSessionExecutor) {
       return {
         executor: lastSessionExecutor as BaseCodingAgent,
@@ -202,7 +199,7 @@ export function SessionChatBoxContainer({
     }
 
     return null;
-  }, [processes, lastSessionProcesses, sessions]);
+  }, [processes, lastSessionExecutor]);
 
   // Message editor state
   const {

@@ -130,15 +130,7 @@
     "archived": "Archivado",
     "loading": "Cargando...",
     "selectToStart": "Selecciona un espacio de trabajo para comenzar",
-    "draft": "Borrador",
-    "rename": {
-      "title": "Renombrar espacio de trabajo",
-      "description": "Ingresa un nuevo nombre para este espacio de trabajo.",
-      "nameLabel": "Nombre",
-      "placeholder": "Ingresa el nombre del espacio de trabajo",
-      "action": "Renombrar",
-      "renaming": "Renombrando..."
-    }
+    "draft": "Borrador"
   },
   "fileTree": {
     "searchPlaceholder": "Buscar archivos...",
@@ -170,15 +162,7 @@
     "viewInChangesPanel": "Ver en panel de cambios",
     "copyPath": "Copiar ruta",
     "copyWorktreePath": "Copiar ruta del worktree",
-    "openInIde": "Abrir en IDE",
-    "cancel": "Cancelar",
-    "saveChanges": "Guardar cambios",
-    "copied": "Copiado"
-  },
-  "comments": {
-    "addReviewComment": "Agregar comentario de revisión",
-    "addPlaceholder": "Agregar un comentario...",
-    "editPlaceholder": "Editar comentario..."
+    "openInIde": "Abrir en IDE"
   },
   "confirm": {
     "defaultConfirm": "Confirmar",

@@ -161,7 +161,7 @@ function WYSIWYGEditor({
         CodeHighlightNode,
         LinkNode,
         ImageNode,
-        PrCommentNode,
+        GitHubCommentNode,
         TableNode,
         TableRowNode,
         TableCellNode,

@@ -3,8 +3,7 @@ import { cn } from '@/lib/utils';
 import { FileTreeSearchBar } from './FileTreeSearchBar';
 import { FileTreeNode } from './FileTreeNode';
 import type { TreeNode } from '../types/fileTree';
-import { CollapsibleSectionHeader } from '../primitives/CollapsibleSectionHeader';
-import { PERSIST_KEYS } from '@/stores/useUiPreferencesStore';
+import { SectionHeader } from '../primitives/SectionHeader';
 
 interface FileTreeProps {
   nodes: TreeNode[];
@@ -67,31 +66,24 @@ export function FileTree({
 
   return (
     <div className={cn('w-full h-full bg-secondary flex flex-col', className)}>
-      <CollapsibleSectionHeader
-        title="Changes"
-        persistKey={PERSIST_KEYS.changesSection}
-        contentClassName="flex flex-col flex-1 min-h-0"
-      >
-        <div className="px-base pt-base">
-          <FileTreeSearchBar
-            searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
-            isAllExpanded={isAllExpanded}
-            onToggleExpandAll={onToggleExpandAll}
-          />
-        </div>
-        <div className="p-base flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-panel scrollbar-track-transparent">
-          {nodes.length > 0 ? (
-            renderNodes(nodes)
-          ) : (
-            <div className="p-base text-low text-sm">
-              {searchQuery
-                ? t('common:fileTree.noResults')
-                : 'No changed files'}
-            </div>
-          )}
-        </div>
-      </CollapsibleSectionHeader>
+      <SectionHeader title="Changes" />
+      <div className="px-base pt-base">
+        <FileTreeSearchBar
+          searchQuery={searchQuery}
+          onSearchChange={onSearchChange}
+          isAllExpanded={isAllExpanded}
+          onToggleExpandAll={onToggleExpandAll}
+        />
+      </div>
+      <div className="p-base flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-panel scrollbar-track-transparent">
+        {nodes.length > 0 ? (
+          renderNodes(nodes)
+        ) : (
+          <div className="p-base text-low text-sm">
+            {searchQuery ? t('common:fileTree.noResults') : 'No changed files'}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -105,8 +105,10 @@ function GitPanelContainer({
       const actionDef = actionMap[action];
       if (!actionDef) return;
 
-      // Execute git action with workspaceId and repoId
-      await executeAction(actionDef, selectedWorkspace.id, repoId);
+      // Execute action with pre-selected repoId
+      await executeAction(actionDef, selectedWorkspace.id, {
+        gitRepoId: repoId,
+      });
     },
     [selectedWorkspace, executeAction]
   );

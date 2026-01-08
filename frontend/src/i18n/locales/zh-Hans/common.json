@@ -130,15 +130,7 @@
     "archived": "已归档",
     "loading": "加载中...",
     "selectToStart": "选择一个工作区开始",
-    "draft": "草稿",
-    "rename": {
-      "title": "重命名工作区",
-      "description": "输入此工作区的新名称。",
-      "nameLabel": "名称",
-      "placeholder": "输入工作区名称",
-      "action": "重命名",
-      "renaming": "正在重命名..."
-    }
+    "draft": "草稿"
   },
   "fileTree": {
     "searchPlaceholder": "搜索文件...",
@@ -170,15 +162,7 @@
     "viewInChangesPanel": "在更改面板中查看",
     "copyPath": "复制路径",
     "copyWorktreePath": "复制工作树路径",
-    "openInIde": "在IDE中打开",
-    "cancel": "取消",
-    "saveChanges": "保存更改",
-    "copied": "已复制"
-  },
-  "comments": {
-    "addReviewComment": "添加审查评论",
-    "addPlaceholder": "添加评论...",
-    "editPlaceholder": "编辑评论..."
+    "openInIde": "在IDE中打开"
   },
   "confirm": {
     "defaultConfirm": "确认",

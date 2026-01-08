@@ -29,7 +29,6 @@ import {
   ArrowsClockwiseIcon,
   CrosshairIcon,
   DesktopIcon,
-  PencilSimpleIcon,
 } from '@phosphor-icons/react';
 import { useDiffViewStore } from '@/stores/useDiffViewStore';
 import { useUiPreferencesStore } from '@/stores/useUiPreferencesStore';
@@ -41,7 +40,6 @@ import { workspaceSummaryKeys } from '@/components/ui-new/hooks/useWorkspaces';
 import { ConfirmDialog } from '@/components/ui-new/dialogs/ConfirmDialog';
 import { ChangeTargetDialog } from '@/components/ui-new/dialogs/ChangeTargetDialog';
 import { RebaseDialog } from '@/components/ui-new/dialogs/RebaseDialog';
-import { RenameWorkspaceDialog } from '@/components/ui-new/dialogs/RenameWorkspaceDialog';
 import { CreatePRDialog } from '@/components/dialogs/tasks/CreatePRDialog';
 import { getIdeName } from '@/components/ide/IdeIcon';
 import { EditorSelectionDialog } from '@/components/dialogs/tasks/EditorSelectionDialog';
@@ -62,13 +60,20 @@ export type DevServerState = 'stopped' | 'starting' | 'running' | 'stopping';
 export interface ActionExecutorContext {
   navigate: NavigateFunction;
   queryClient: QueryClient;
-  selectWorkspace: (workspaceId: string) => void;
-  activeWorkspaces: SidebarWorkspace[];
-  currentWorkspaceId: string | null;
-  containerRef: string | null;
-  runningDevServerId: string | null;
-  startDevServer: () => void;
-  stopDevServer: () => void;
+  // Optional workspace selection context (for archive action)
+  selectWorkspace?: (workspaceId: string) => void;
+  activeWorkspaces?: SidebarWorkspace[];
+  // Current workspace ID (for actions that optionally use workspace context)
+  currentWorkspaceId?: string;
+
+  // ContextBar-specific state (optional, only set in ContextBar context)
+  containerRef?: string; // For copy path (workspace.container_ref)
+  runningDevServerId?: string; // For stopping dev server
+  startDevServer?: () => void; // For starting dev server with mutation tracking
+  stopDevServer?: () => void; // For stopping dev server with mutation tracking
+
+  // Git-specific state (optional, only set when clicking from a specific RepoCard)
+  gitRepoId?: string;
 }
 
 // Context for evaluating action visibility and state conditions
@@ -91,10 +96,10 @@ export interface ActionVisibilityContext {
   diffViewMode: DiffViewMode;
   isAllDiffsExpanded: boolean;
 
-  // Dev server state
-  editorType: EditorType | null;
-  devServerState: DevServerState;
-  runningDevServerId: string | null;
+  // ContextBar-specific state (optional)
+  editorType?: EditorType | null;
+  devServerState?: DevServerState;
+  runningDevServerId?: string;
 
   // Git panel state
   hasGitRepos: boolean;
@@ -137,21 +142,10 @@ export interface WorkspaceActionDefinition extends ActionBase {
   ) => Promise<void> | void;
 }
 
-// Git action (requires workspace + repoId)
-export interface GitActionDefinition extends ActionBase {
-  requiresTarget: 'git';
-  execute: (
-    ctx: ActionExecutorContext,
-    workspaceId: string,
-    repoId: string
-  ) => Promise<void> | void;
-}
-
 // Discriminated union
 export type ActionDefinition =
   | GlobalActionDefinition
-  | WorkspaceActionDefinition
-  | GitActionDefinition;
+  | WorkspaceActionDefinition;
 
 // Helper to get workspace from query cache
 function getWorkspaceFromCache(
@@ -197,20 +191,6 @@ export const Actions = {
     },
   },
 
-  RenameWorkspace: {
-    id: 'rename-workspace',
-    label: 'Rename',
-    icon: PencilSimpleIcon,
-    requiresTarget: true,
-    execute: async (ctx, workspaceId) => {
-      const workspace = getWorkspaceFromCache(ctx.queryClient, workspaceId);
-      await RenameWorkspaceDialog.show({
-        workspaceId,
-        currentName: workspace.name || workspace.branch,
-      });
-    },
-  },
-
   PinWorkspace: {
     id: 'pin-workspace',
     label: (workspace?: Workspace) => (workspace?.pinned ? 'Unpin' : 'Pin'),
@@ -237,9 +217,9 @@ export const Actions = {
       const workspace = getWorkspaceFromCache(ctx.queryClient, workspaceId);
       const wasArchived = workspace.archived;
 
-      // Calculate next workspace before archiving
+      // Calculate next workspace before archiving (if we have the context)
       let nextWorkspaceId: string | null = null;
-      if (!wasArchived) {
+      if (!wasArchived && ctx.selectWorkspace && ctx.activeWorkspaces) {
         const currentIndex = ctx.activeWorkspaces.findIndex(
           (ws) => ws.id === workspaceId
         );
@@ -256,7 +236,7 @@ export const Actions = {
       invalidateWorkspaceQueries(ctx.queryClient, workspaceId);
 
       // Select next workspace after successful archive
-      if (!wasArchived && nextWorkspaceId) {
+      if (!wasArchived && nextWorkspaceId && ctx.selectWorkspace) {
         ctx.selectWorkspace(nextWorkspaceId);
       }
     },
@@ -293,6 +273,7 @@ export const Actions = {
     id: 'new-workspace',
     label: 'New Workspace',
     icon: PlusIcon,
+    shortcut: 'N',
     requiresTarget: false,
     execute: (ctx) => {
       ctx.navigate('/workspaces/create');
@@ -303,6 +284,7 @@ export const Actions = {
     id: 'settings',
     label: 'Settings',
     icon: GearIcon,
+    shortcut: ',',
     requiresTarget: false,
     execute: (ctx) => {
       ctx.navigate('/settings');
@@ -366,6 +348,7 @@ export const Actions = {
         ? 'Hide Sidebar'
         : 'Show Sidebar',
     icon: SidebarSimpleIcon,
+    shortcut: '[',
     requiresTarget: false,
     isActive: (ctx) => ctx.isSidebarVisible,
     execute: () => {
@@ -395,6 +378,7 @@ export const Actions = {
         ? 'Hide Git Panel'
         : 'Show Git Panel',
     icon: SidebarSimpleIcon,
+    shortcut: ']',
     requiresTarget: false,
     isActive: (ctx) => ctx.isGitPanelVisible,
     execute: () => {
@@ -409,6 +393,7 @@ export const Actions = {
         ? 'Hide Changes Panel'
         : 'Show Changes Panel',
     icon: GitDiffIcon,
+    shortcut: 'C',
     requiresTarget: false,
     isVisible: (ctx) => !ctx.isCreateMode,
     isActive: (ctx) => ctx.isChangesMode,
@@ -425,6 +410,7 @@ export const Actions = {
         ? 'Hide Logs Panel'
         : 'Show Logs Panel',
     icon: TerminalIcon,
+    shortcut: 'L',
     requiresTarget: false,
     isVisible: (ctx) => !ctx.isCreateMode,
     isActive: (ctx) => ctx.isLogsMode,
@@ -441,6 +427,7 @@ export const Actions = {
         ? 'Hide Preview Panel'
         : 'Show Preview Panel',
     icon: DesktopIcon,
+    shortcut: 'P',
     requiresTarget: false,
     isVisible: (ctx) => !ctx.isCreateMode,
     isActive: (ctx) => ctx.isPreviewMode,
@@ -586,9 +573,9 @@ export const Actions = {
     getLabel: (ctx) =>
       ctx.devServerState === 'running' ? 'Stop Dev Server' : 'Start Dev Server',
     execute: (ctx) => {
-      if (ctx.runningDevServerId) {
+      if (ctx.runningDevServerId && ctx.stopDevServer) {
         ctx.stopDevServer();
-      } else {
+      } else if (ctx.startDevServer) {
         ctx.startDevServer();
       }
     },
@@ -599,9 +586,18 @@ export const Actions = {
     id: 'git-create-pr',
     label: 'Create Pull Request',
     icon: GitPullRequestIcon,
-    requiresTarget: 'git',
+    requiresTarget: true,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
-    execute: async (ctx, workspaceId, repoId) => {
+    execute: async (ctx, workspaceId) => {
+      // Get repoId - either from context (RepoCard click) or fetch repos
+      let repoId = ctx.gitRepoId;
+      if (!repoId) {
+        const repos = await attemptsApi.getRepos(workspaceId);
+        if (repos.length === 0) throw new Error('No repositories found');
+        if (repos.length > 1) throw new Error('Please select a repository');
+        repoId = repos[0].id;
+      }
+
       const workspace = getWorkspaceFromCache(ctx.queryClient, workspaceId);
       const task = await tasksApi.getById(workspace.task_id);
 
@@ -626,9 +622,18 @@ export const Actions = {
     id: 'git-merge',
     label: 'Merge',
     icon: GitMergeIcon,
-    requiresTarget: 'git',
+    requiresTarget: true,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
-    execute: async (ctx, workspaceId, repoId) => {
+    execute: async (ctx, workspaceId) => {
+      // Get repoId - either from context (RepoCard click) or fetch repos
+      let repoId = ctx.gitRepoId;
+      if (!repoId) {
+        const repos = await attemptsApi.getRepos(workspaceId);
+        if (repos.length === 0) throw new Error('No repositories found');
+        if (repos.length > 1) throw new Error('Please select a repository');
+        repoId = repos[0].id;
+      }
+
       const confirmResult = await ConfirmDialog.show({
         title: 'Merge Branch',
         message:
@@ -648,17 +653,27 @@ export const Actions = {
     id: 'git-rebase',
     label: 'Rebase',
     icon: ArrowsClockwiseIcon,
-    requiresTarget: 'git',
+    requiresTarget: true,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
-    execute: async (_ctx, workspaceId, repoId) => {
+    execute: async (ctx, workspaceId) => {
+      // Fetch repos to get target_branch info
       const repos = await attemptsApi.getRepos(workspaceId);
-      const repo = repos.find((r) => r.id === repoId);
-      if (!repo) throw new Error('Repository not found');
+      if (repos.length === 0) throw new Error('No repositories found');
 
-      const branches = await repoApi.getBranches(repoId);
+      // Get repo - either from context (RepoCard click) or use first repo
+      let repo = ctx.gitRepoId
+        ? repos.find((r) => r.id === ctx.gitRepoId)
+        : repos[0];
+
+      if (!repo) {
+        if (repos.length > 1) throw new Error('Please select a repository');
+        repo = repos[0];
+      }
+
+      const branches = await repoApi.getBranches(repo.id);
       await RebaseDialog.show({
         attemptId: workspaceId,
-        repoId,
+        repoId: repo.id,
         branches,
         initialTargetBranch: repo.target_branch,
       });
@@ -669,9 +684,18 @@ export const Actions = {
     id: 'git-change-target',
     label: 'Change Target Branch',
     icon: CrosshairIcon,
-    requiresTarget: 'git',
+    requiresTarget: true,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
-    execute: async (_ctx, workspaceId, repoId) => {
+    execute: async (ctx, workspaceId) => {
+      // Get repoId - either from context (RepoCard click) or fetch repos
+      let repoId = ctx.gitRepoId;
+      if (!repoId) {
+        const repos = await attemptsApi.getRepos(workspaceId);
+        if (repos.length === 0) throw new Error('No repositories found');
+        if (repos.length > 1) throw new Error('Please select a repository');
+        repoId = repos[0].id;
+      }
+
       const branches = await repoApi.getBranches(repoId);
       await ChangeTargetDialog.show({
         attemptId: workspaceId,

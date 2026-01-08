@@ -327,6 +327,8 @@ conflicted_files: Array<string>, };
 
 export type RunScriptError = { "type": "no_script_configured" } | { "type": "process_already_running" };
 
+export type DeleteWorkspaceError = { "type": "has_running_processes" };
+
 export type RunUserCommandRequest = { command: string, 
 /**
  * Optional timeout in seconds. If specified, the command will be killed after this duration.
@@ -403,11 +405,7 @@ has_running_dev_server: boolean,
 /**
  * Does this workspace have unseen coding agent turns?
  */
-has_unseen_turns: boolean, 
-/**
- * PR status for this workspace (if any PR exists)
- */
-pr_status: MergeStatus | null, };
+has_unseen_turns: boolean, };
 
 export type WorkspaceSummaryResponse = { summaries: Array<WorkspaceSummary>, };
 

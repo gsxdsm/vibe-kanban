@@ -130,15 +130,7 @@
     "archived": "보관됨",
     "loading": "로딩 중...",
     "selectToStart": "워크스페이스를 선택하여 시작",
-    "draft": "초안",
-    "rename": {
-      "title": "워크스페이스 이름 변경",
-      "description": "이 워크스페이스의 새 이름을 입력하세요.",
-      "nameLabel": "이름",
-      "placeholder": "워크스페이스 이름 입력",
-      "action": "이름 변경",
-      "renaming": "이름 변경 중..."
-    }
+    "draft": "초안"
   },
   "fileTree": {
     "searchPlaceholder": "파일 검색...",
@@ -170,15 +162,7 @@
     "viewInChangesPanel": "변경사항 패널에서 보기",
     "copyPath": "워크트리 경로 복사",
     "copyWorktreePath": "워크트리 경로 복사",
-    "openInIde": "IDE에서 열기",
-    "cancel": "취소",
-    "saveChanges": "변경사항 저장",
-    "copied": "복사됨"
-  },
-  "comments": {
-    "addReviewComment": "리뷰 코멘트 추가",
-    "addPlaceholder": "코멘트 추가...",
-    "editPlaceholder": "코멘트 편집..."
+    "openInIde": "IDE에서 열기"
   },
   "confirm": {
     "defaultConfirm": "확인",

@@ -8,13 +8,12 @@ import {
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { CollapsibleSectionHeader } from '../primitives/CollapsibleSectionHeader';
+import { SectionHeader } from '../primitives/SectionHeader';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import {
   VirtualizedProcessLogs,
   type LogEntry,
 } from '../VirtualizedProcessLogs';
-import { PERSIST_KEYS } from '@/stores/useUiPreferencesStore';
 
 interface PreviewControlsProps {
   logs: LogEntry[];
@@ -57,15 +56,13 @@ export function PreviewControls({
         className
       )}
     >
-      <CollapsibleSectionHeader
-        title="Dev Server"
-        persistKey={PERSIST_KEYS.devServerSection}
-        contentClassName="flex flex-col flex-1 overflow-hidden"
-      >
+      <SectionHeader title="Dev Server" />
+
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Controls row: URL bar + Start/Stop button */}
         <div className="flex items-center gap-half p-base">
           {url && (
-            <div className="flex items-center gap-half bg-panel rounded-sm px-base py-half flex-1 min-w-0">
+            <div className="flex items-center gap-half bg-panel rounded-sm px-base py-half flex-1">
               <span className="flex-1 font-mono text-sm text-low truncate">
                 {url}
               </span>
@@ -142,7 +139,7 @@ export function PreviewControls({
             )}
           </div>
         </div>
-      </CollapsibleSectionHeader>
+      </div>
     </div>
   );
 }

@@ -130,15 +130,7 @@
     "archived": "アーカイブ済み",
     "loading": "読み込み中...",
     "selectToStart": "ワークスペースを選択して開始",
-    "draft": "下書き",
-    "rename": {
-      "title": "ワークスペースの名前を変更",
-      "description": "このワークスペースの新しい名前を入力してください。",
-      "nameLabel": "名前",
-      "placeholder": "ワークスペース名を入力",
-      "action": "名前を変更",
-      "renaming": "名前を変更中..."
-    }
+    "draft": "下書き"
   },
   "fileTree": {
     "searchPlaceholder": "ファイルを検索...",
@@ -170,15 +162,7 @@
     "viewInChangesPanel": "変更パネルで表示",
     "copyPath": "パスをコピー",
     "copyWorktreePath": "ワークツリーパスをコピー",
-    "openInIde": "IDEで開く",
-    "cancel": "キャンセル",
-    "saveChanges": "変更を保存",
-    "copied": "コピーしました"
-  },
-  "comments": {
-    "addReviewComment": "レビューコメントを追加",
-    "addPlaceholder": "コメントを追加...",
-    "editPlaceholder": "コメントを編集..."
+    "openInIde": "IDEで開く"
   },
   "confirm": {
     "defaultConfirm": "確認",

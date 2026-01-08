@@ -130,15 +130,7 @@
     "archived": "Archived",
     "loading": "Loading...",
     "selectToStart": "Select a workspace to get started",
-    "draft": "Draft",
-    "rename": {
-      "title": "Rename Workspace",
-      "description": "Enter a new name for this workspace.",
-      "nameLabel": "Name",
-      "placeholder": "Enter workspace name",
-      "action": "Rename",
-      "renaming": "Renaming..."
-    }
+    "draft": "Draft"
   },
   "fileTree": {
     "searchPlaceholder": "Search files...",
@@ -170,15 +162,7 @@
     "viewInChangesPanel": "View in changes panel",
     "copyPath": "Copy path",
     "copyWorktreePath": "Copy worktree path",
-    "openInIde": "Open in IDE",
-    "cancel": "Cancel",
-    "saveChanges": "Save Changes",
-    "copied": "Copied"
-  },
-  "comments": {
-    "addReviewComment": "Add Review Comment",
-    "addPlaceholder": "Add a comment...",
-    "editPlaceholder": "Edit comment..."
+    "openInIde": "Open in IDE"
   },
   "confirm": {
     "defaultConfirm": "Confirm",
