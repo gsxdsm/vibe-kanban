@@ -217,7 +217,6 @@
     @apply ring-inset;
   }
 
-<<<<<<< HEAD:frontend/src/styles/index.css
   /* Prevent iOS zooming on small text inputs */
   input[type='text']:not([size]),
   input[type='search']:not([size]),
@@ -247,9 +246,6 @@
   }
 
   .logo {
-=======
-  .legacy-design .logo {
->>>>>>> 527febdc (Workspaces FE (#1733)):frontend/src/styles/legacy/index.css
     @apply fill-foreground;
   }
 }
