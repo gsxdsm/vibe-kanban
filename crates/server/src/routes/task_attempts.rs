@@ -602,7 +602,7 @@ pub async fn push_task_attempt_branch(
 
     match deployment
         .git()
-        .push_to_github(&push_path, &branch_to_push, false)
+        .push_to_remote(&push_path, &branch_to_push, false)
     {
         Ok(_) => Ok(ResponseJson(ApiResponse::success(()))),
         Err(GitServiceError::GitCLI(GitCliError::PushRejected(_))) => Ok(ResponseJson(
@@ -645,7 +645,7 @@ pub async fn force_push_task_attempt_branch(
 
     deployment
         .git()
-        .push_to_github(&push_path, &branch_to_push, true)?;
+        .push_to_remote(&push_path, &branch_to_push, true)?;
     Ok(ResponseJson(ApiResponse::success(())))
 }
 
