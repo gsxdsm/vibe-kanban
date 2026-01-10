@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT p.id as \"id!: Uuid\", p.name, p.dev_script, p.dev_script_working_dir,\n                   p.default_agent_working_dir,\n                   p.deployment_script,\n                   p.remote_project_id as \"remote_project_id: Uuid\",\n                   p.prefer_remote_branch,\n                   p.ntfy_enabled,\n                   p.ntfy_url,\n                   p.ntfy_topic,\n                   p.created_at as \"created_at!: DateTime<Utc>\", p.updated_at as \"updated_at!: DateTime<Utc>\"\n            FROM projects p\n            WHERE p.id IN (\n                SELECT DISTINCT t.project_id\n                FROM tasks t\n                INNER JOIN workspaces w ON w.task_id = t.id\n                ORDER BY w.updated_at DESC\n            )\n            LIMIT $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "dev_script",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "dev_script_working_dir",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "default_agent_working_dir",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "deployment_script",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "remote_project_id: Uuid",
+        "ordinal": 6,
+        "type_info": "Blob"
+      },
+      {
+        "name": "prefer_remote_branch",
+        "ordinal": 7,
+        "type_info": "Bool"
+      },
+      {
+        "name": "ntfy_enabled",
+        "ordinal": 8,
+        "type_info": "Bool"
+      },
+      {
+        "name": "ntfy_url",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "ntfy_topic",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "4da4ed9567b910c3d13a72685e279c4249271082cbe21624d4cd0a58c82845d9"
+}
