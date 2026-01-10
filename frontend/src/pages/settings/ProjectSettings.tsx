@@ -406,6 +406,9 @@ export function ProjectSettings() {
           draft.default_agent_working_dir.trim() || null,
         deployment_script: null, // deployment script moved to per-repo section
         prefer_remote_branch: draft.prefer_remote_branch,
+        ntfy_enabled: null,
+        ntfy_url: null,
+        ntfy_topic: null,
       };
 
       updateProject.mutate({
@@ -447,6 +450,9 @@ export function ProjectSettings() {
           default_agent_working_dir: selectedProject.default_agent_working_dir,
           deployment_script: scriptsDraft.deployment_script.trim() || null,
           prefer_remote_branch: selectedProject.prefer_remote_branch,
+          ntfy_enabled: null,
+          ntfy_url: null,
+          ntfy_topic: null,
         };
 
         await projectsApi.update(selectedProject.id, updateData);

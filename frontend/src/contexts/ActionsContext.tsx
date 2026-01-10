@@ -67,7 +67,8 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
     async (
       action: ActionDefinition,
       workspaceId?: string,
-      contextOverride?: Partial<ActionExecutorContext>
+      contextOverride?: Partial<ActionExecutorContext>,
+      repoId?: string
     ): Promise<void> => {
       try {
         // Merge context with any overrides (e.g., gitRepoId from GitPanelContainer)
@@ -75,7 +76,19 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
           ? { ...executorContext, ...contextOverride }
           : executorContext;
 
-        if (action.requiresTarget) {
+        if (action.requiresTarget === 'git') {
+          if (!workspaceId) {
+            throw new Error(
+              `Action "${action.id}" requires a workspace target`
+            );
+          }
+          if (!repoId) {
+            throw new Error(
+              `Action "${action.id}" requires a git repository target`
+            );
+          }
+          await action.execute(ctx, workspaceId, repoId);
+        } else if (action.requiresTarget === true) {
           if (!workspaceId) {
             throw new Error(
               `Action "${action.id}" requires a workspace target`

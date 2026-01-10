@@ -19,6 +19,7 @@ import {
   Pages,
   getPageActions,
   type PageId,
+  type StaticPageId,
   type CommandBarGroup,
   type CommandBarGroupItem,
   type ResolvedGroup,
@@ -90,7 +91,15 @@ const CommandBarDialogImpl = NiceModal.create<CommandBarDialogProps>(
     // When searching on root page, also include actions from nested pages
     const getPageWithItems = useMemo(() => {
       return (pageId: PageId, searchQuery: string): ResolvedCommandBarPage => {
-        const basePage = Pages[pageId];
+        // Handle dynamic pages (like selectRepo) that aren't in Pages
+        if (pageId === 'selectRepo') {
+          return {
+            id: 'selectRepo',
+            title: 'Select Repository',
+            groups: [],
+          };
+        }
+        const basePage = Pages[pageId as StaticPageId];
 
         // Process each group, expanding childPages markers within
         const resolvedGroups: ResolvedGroup[] = basePage.items
@@ -98,13 +107,13 @@ const CommandBarDialogImpl = NiceModal.create<CommandBarDialogProps>(
             const resolvedItems = group.items.flatMap(
               (item: CommandBarGroupItem): ResolvedGroupItem[] => {
                 if (item.type === 'childPages') {
-                  const childPage = Pages[item.id];
+                  const childPage = Pages[item.id as StaticPageId];
                   // Check page visibility condition
                   if (!isPageVisible(childPage, visibilityContext)) {
                     return [];
                   }
                   // Get icon based on page type
-                  const pageIcons: Record<PageId, typeof StackIcon> = {
+                  const pageIcons: Record<StaticPageId, typeof StackIcon> = {
                     root: SquaresFourIcon,
                     workspaceActions: StackIcon,
                     diffOptions: SlidersIcon,
@@ -116,7 +125,7 @@ const CommandBarDialogImpl = NiceModal.create<CommandBarDialogProps>(
                       type: 'page' as const,
                       pageId: item.id,
                       label: childPage.title ?? item.id,
-                      icon: pageIcons[item.id],
+                      icon: pageIcons[item.id as StaticPageId],
                     },
                   ];
                 }

@@ -252,6 +252,13 @@ export function ActionsDropdown({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                disabled={!projectId || !task}
+                onClick={handlePreview}
+              >
+                {t('actionsMenu.preview')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 disabled={!task || isShared}
                 onClick={handleShare}
               >

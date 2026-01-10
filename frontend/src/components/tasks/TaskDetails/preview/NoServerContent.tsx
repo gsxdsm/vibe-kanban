@@ -89,6 +89,9 @@ export function NoServerContent({
           default_agent_working_dir: project.default_agent_working_dir ?? null,
           deployment_script: project.deployment_script ?? null,
           prefer_remote_branch: project.prefer_remote_branch ?? null,
+          ntfy_enabled: null,
+          ntfy_url: null,
+          ntfy_topic: null,
         },
       },
       {

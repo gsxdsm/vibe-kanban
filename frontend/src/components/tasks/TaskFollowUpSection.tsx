@@ -60,9 +60,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queueApi } from '@/lib/api';
 import type { QueueStatus } from 'shared/types';
 import { imagesApi, attemptsApi } from '@/lib/api';
-import { GitHubCommentsDialog } from '@/components/dialogs/tasks/GitHubCommentsDialog';
+import { PrCommentsDialog } from '@/components/dialogs/tasks/PrCommentsDialog';
 import { RunCommandDialog } from '@/components/dialogs/tasks/RunCommandDialog';
-import type { NormalizedComment } from '@/components/ui/wysiwyg/nodes/github-comment-node';
+import type { NormalizedComment } from '@/components/ui/wysiwyg/nodes/pr-comment-node';
 import type { Session } from 'shared/types';
 
 interface TaskFollowUpSectionProps {

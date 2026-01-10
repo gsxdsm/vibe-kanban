@@ -233,6 +233,7 @@
   },
   "conversation": {
     "executors": "Executors",
+    "saveAsDefault": "Save as default",
     "you": "You",
     "thinking": "Thinking",
     "todo": "Todo",

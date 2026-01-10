@@ -51,6 +51,7 @@ use uuid::Uuid;
 use crate::services::{
     git::{GitService, GitServiceError},
     notification::{NotificationContext, NotificationEvent, NotificationService},
+    ntfy::NtfyService,
     share::SharePublisher,
     workspace_manager::WorkspaceError as WorkspaceManagerError,
     worktree_manager::WorktreeError,
@@ -92,6 +93,8 @@ pub trait ContainerService {
     fn share_publisher(&self) -> Option<&SharePublisher>;
 
     fn notification_service(&self) -> &NotificationService;
+
+    fn ntfy_service(&self) -> &NtfyService;
 
     fn workspace_to_current_dir(&self, workspace: &Workspace) -> PathBuf;
 
@@ -224,6 +227,11 @@ pub trait ContainerService {
 
         self.notification_service()
             .notify_with_context(&title, &message, notification_context)
+            .await;
+
+        // Send ntfy notification if enabled for the project
+        self.ntfy_service()
+            .notify_project(&ctx.project, &title, &message)
             .await;
     }
 
@@ -432,6 +440,9 @@ pub trait ContainerService {
                                 },
                                 deployment_script: project.deployment_script.clone(),
                                 prefer_remote_branch: None,
+                                ntfy_enabled: None,
+                                ntfy_url: None,
+                                ntfy_topic: None,
                             },
                         )
                         .await?;

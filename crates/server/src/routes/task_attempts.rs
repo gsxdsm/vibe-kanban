@@ -48,7 +48,6 @@ use serde::{Deserialize, Serialize};
 use services::services::{
     container::ContainerService,
     git::{ConflictOp, GitCliError, GitServiceError},
-    github::GitHubService,
     workspace_manager::WorkspaceManager,
 };
 use sqlx::Error as SqlxError;

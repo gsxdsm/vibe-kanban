@@ -3,12 +3,22 @@ import { type ActionDefinition, type ActionVisibilityContext } from './index';
 import { Actions } from './index';
 
 // Define page IDs first to avoid circular reference
-export type PageId =
+export type StaticPageId =
   | 'root'
   | 'workspaceActions'
   | 'diffOptions'
   | 'viewOptions'
   | 'gitActions';
+
+// Dynamic page IDs (e.g., for repo selection)
+export type PageId = StaticPageId | 'selectRepo';
+
+// Repo item for repo selection page
+export interface RepoItem {
+  id: string;
+  name: string;
+  path: string;
+}
 
 // Items that can appear inside a group
 export type CommandBarGroupItem =
@@ -29,7 +39,8 @@ export type CommandBarItem = CommandBarGroup;
 // Resolved types (after childPages expansion)
 export type ResolvedGroupItem =
   | { type: 'action'; action: ActionDefinition }
-  | { type: 'page'; pageId: PageId; label: string; icon: Icon };
+  | { type: 'page'; pageId: PageId; label: string; icon: Icon }
+  | { type: 'repo'; repo: RepoItem };
 
 export interface ResolvedGroup {
   label: string;
@@ -46,7 +57,7 @@ export interface CommandBarPage {
   isVisible?: (ctx: ActionVisibilityContext) => boolean;
 }
 
-export const Pages: Record<PageId, CommandBarPage> = {
+export const Pages: Record<StaticPageId, CommandBarPage> = {
   // Root page - shown when opening via CMD+K
   root: {
     id: 'root',
@@ -163,7 +174,7 @@ export const Pages: Record<PageId, CommandBarPage> = {
 };
 
 // Get all actions from a specific page
-export function getPageActions(pageId: PageId): ActionDefinition[] {
+export function getPageActions(pageId: StaticPageId): ActionDefinition[] {
   const page = Pages[pageId];
   const actions: ActionDefinition[] = [];
 
